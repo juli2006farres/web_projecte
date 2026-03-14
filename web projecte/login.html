@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ca">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - AgendaTIC</title>
+    <link rel="stylesheet" href="css/login.css">
+</head>
+
+<body>
+    <header>
+        <div class="header-info">
+            <h1>AgendaTIC</h1>
+            <p>Inici de sessió</p>
+        </div>
+        <a href="index.html" class="back-icon" aria-label="Tornar a l'inici">
+            🏠
+        </a>
+    </header>
+
+    <main>
+        <div class="login-container">
+            <h2>Benvingut/da</h2>
+            <form action="admin.html" class="login-form">
+                <div class="form-group">
+                    <label for="username">Usuari</label>
+                    <input type="text" id="username" name="username" placeholder="Introdueix el teu usuari" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Contrasenya</label>
+                    <input type="password" id="password" name="password" placeholder="Introdueix la teva contrasenya"
+                        required>
+                </div>
+                <button type="submit" class="btn-login">Entrar</button>
+            </form>
+        </div>
+    </main>
+</body>
+
+</html>
