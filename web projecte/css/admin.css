@@ -1,66 +1,122 @@
 /* Estils addicionals per l'arxiu admin.html */
 
-/* Canviem l'aside de l'administrador perquè sigui diferent de l'usuari final */
+/* Canviem l'aside de l'administrador perquè sigui un dashboard lateral fosc elegant */
 .admin-sidebar {
-    width: 25%;
-    /* L'admin necessita una mica més d'espai al lateral */
+    width: 20%;
+    /* Més ajustat i equilibrat */
     height: 100%;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
+    background-color: #1e293b;
+    /* Fons fosc pissarra (slate-800) */
+    color: #e2e8f0;
+}
+
+/* Capçalera del sidebar (Branding) */
+.admin-branding {
+    display: flex;
     align-items: center;
-    background-color: #f0f4f8;
-    /* Gris-blau claret i elegant */
-    padding-top: 5%;
+    gap: 14px;
+    padding: 24px;
+    border-bottom: 1px solid #334155;
+    margin-bottom: 15px;
 }
 
-.admin-sidebar button,
-.admin-sidebar a {
-    color: white;
-    border: none;
-    padding: 6% 0;
-    width: 80%;
-    font-size: 1.4vw;
-    margin-bottom: 5%;
-    border-radius: 10px;
-    /* Arrodonit per tots els costats */
-    cursor: pointer;
-    transition: all 0.3s ease;
-    text-align: center;
-    background-color: #94a3b8;
-    /* Gris plom neutral */
-    text-decoration: none;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.admin-sidebar button:hover,
-.admin-sidebar a:hover {
-    background-color: #64748b;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-}
-
-/* Opcions seleccionades i hover per admin */
-.admin-sidebar button.active {
-    background-color: #3b82f6;
-    /* Blau marca d'AgendaTIC */
-    width: 85%;
+.admin-avatar {
+    width: 42px;
+    height: 42px;
+    background-color: #3b82f6; /* Blau AgendaTIC */
+    border-radius: 10px; /* Quadrat arrodonit */
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-weight: bold;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    font-size: 1.2vw;
+    color: white;
+    box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
 }
 
-/* El botó sortir el posem a l'últim, donant espai i diferent color */
+.admin-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-name {
+    font-weight: 700;
+    font-size: 1.05vw;
+    color: #f8fafc;
+    letter-spacing: 0.02em;
+}
+
+.admin-role {
+    font-size: 0.85vw;
+    color: #94a3b8;
+}
+
+/* Navegació */
+.admin-nav {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.admin-sidebar .admin-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: transparent;
+    color: #94a3b8;
+    border: none;
+    padding: 16px 24px;
+    width: 100%;
+    font-size: 1.1vw;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-left: 4px solid transparent;
+}
+
+.btn-icon {
+    font-size: 1.2vw;
+    opacity: 0.8;
+    transition: transform 0.2s ease;
+}
+
+.admin-sidebar .admin-btn:hover {
+    background-color: #334155;
+    color: #f8fafc;
+}
+
+.admin-sidebar .admin-btn:hover .btn-icon {
+    transform: scale(1.1);
+}
+
+/* Opció seleccionada (Activa) */
+.admin-sidebar .admin-btn.active {
+    background-color: #0f172a; /* Fons més fosc (slate-900) */
+    color: #ffffff;
+    border-left-color: #3b82f6; /* Línia blava a l'esquerra destacada */
+    font-weight: 600;
+}
+
+.admin-sidebar .admin-btn.active .btn-icon {
+    opacity: 1;
+    filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.4));
+}
+
+/* Botó Sortir a baix de tot */
 .btn-sortir {
     margin-top: auto;
-    /* Empeny el botó cap avall de l'aside */
-    margin-bottom: 20%;
-    /* Pensem en marges macos respecte a baix */
-    background-color: #ef4444 !important;
-    /* Vermell alerta / sortir */
+    border-top: 1px solid #334155;
+    color: #ef4444 !important; /* Vermell text */
+    padding-top: 20px !important;
+    padding-bottom: 20px !important;
 }
 
 .btn-sortir:hover {
-    background-color: #dc2626 !important;
+    background-color: rgba(239, 68, 68, 0.1) !important;
+    color: #f87171 !important;
 }
 
 /* Panells d'administració */
