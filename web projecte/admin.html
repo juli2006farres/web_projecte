@@ -37,29 +37,9 @@
 
     <main>
         <aside class="admin-sidebar">
-            <div class="admin-branding">
-                <div class="admin-avatar">AT</div>
-                <div class="admin-info">
-                    <span class="admin-name">AgendaTIC</span>
-                    <span class="admin-role">Administració</span>
-                </div>
-            </div>
-            
-            <nav class="admin-nav">
-                <button id="btn-usuaris" class="admin-btn active">
-                    <span class="btn-icon">👥</span>
-                    Gestió d'Usuaris
-                </button>
-                <button id="btn-activitats" class="admin-btn">
-                    <span class="btn-icon">📅</span>
-                    Activitats
-                </button>
-            </nav>
-
-            <button id="btn-sortir" class="admin-btn btn-sortir">
-                <span class="btn-icon">🚪</span>
-                Tancar Sessió
-            </button>
+            <button id="btn-usuaris" class="admin-btn active">Usuaris</button>
+            <button id="btn-activitats" class="admin-btn">Activitats</button>
+            <button onclick="auth.logout()" class="admin-btn btn-sortir">Sortir</button>
         </aside>
 
         <section class="content">
