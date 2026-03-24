@@ -85,4 +85,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initial fetch
     fetchUsers();
+
+    // ---- Modal Afegir Usuari ----
+    const modalOverlay = document.getElementById('modal-overlay');
+    const formUsuari   = document.getElementById('form-nou-usuari');
+
+    document.getElementById('btn-add-user').addEventListener('click', function () {
+        modalOverlay.classList.add('active');
+        document.getElementById('nou-nom').focus();
+    });
+
+    document.getElementById('btn-modal-tancar').addEventListener('click', tancarModal);
+    document.getElementById('btn-modal-cancel').addEventListener('click', tancarModal);
+
+    modalOverlay.addEventListener('click', function (e) {
+        if (e.target === modalOverlay) tancarModal();
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') tancarModal();
+    });
+
+    formUsuari.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const nom    = document.getElementById('nou-nom').value.trim();
+        const correu = document.getElementById('nou-correu').value.trim();
+        const rol    = document.getElementById('nou-rol').value;
+        console.log('Nou usuari:', { nom, correu, rol });
+        // TODO: enviar dades al servidor via fetch()
+        formUsuari.reset();
+        tancarModal();
+    });
+
+    function tancarModal() {
+        modalOverlay.classList.remove('active');
+        formUsuari.reset();
+    }
+
 });

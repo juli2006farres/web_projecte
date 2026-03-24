@@ -1,11 +1,4 @@
-document.addEventListener('DOMContentLoaded', async () => {
-
-    const autorizado = await auth.isAuthorized();
-
-    if (!autorizado) {
-        window.location.href = "login.html";
-        return;
-    }
+document.addEventListener('DOMContentLoaded', () => {
 
     const btns = document.querySelectorAll('.admin-btn:not(.btn-sortir)');
     const panels = document.querySelectorAll('.view-panel');
@@ -30,5 +23,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
     });
+
+    // Assignar acció al botó Sortir (ja que hem tret l'onclick inline del HTML)
+    const btnSortir = document.getElementById('btn-sortir');
+    if (btnSortir) {
+        btnSortir.addEventListener('click', () => {
+            if (window.auth && typeof window.auth.logout === 'function') {
+                window.auth.logout();
+            } else {
+                console.error("Auth library no carregada");
+            }
+        });
+    }
 
 });
