@@ -1,0 +1,89 @@
+/* Estils addicionals per l'arxiu admin.html */
+
+/* Canviem l'aside de l'administrador perquè sigui diferent de l'usuari final */
+.admin-sidebar {
+    width: 25%;
+    /* L'admin necessita una mica més d'espai al lateral */
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    background-color: #f0f4f8;
+    /* Gris-blau claret i elegant */
+    padding-top: 5%;
+}
+
+.admin-sidebar button,
+.admin-sidebar a {
+    color: white;
+    border: none;
+    padding: 6% 0;
+    width: 80%;
+    font-size: 1.4vw;
+    margin-bottom: 5%;
+    border-radius: 10px;
+    /* Arrodonit per tots els costats */
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    background-color: #94a3b8;
+    /* Gris plom neutral */
+    text-decoration: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.admin-sidebar button:hover,
+.admin-sidebar a:hover {
+    background-color: #64748b;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Opcions seleccionades i hover per admin */
+.admin-sidebar button.active {
+    background-color: #3b82f6;
+    /* Blau marca d'AgendaTIC */
+    width: 85%;
+    font-weight: bold;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+/* El botó sortir el posem a l'últim, donant espai i diferent color */
+.btn-sortir {
+    margin-top: auto;
+    /* Empeny el botó cap avall de l'aside */
+    margin-bottom: 20%;
+    /* Pensem en marges macos respecte a baix */
+    background-color: #ef4444 !important;
+    /* Vermell alerta / sortir */
+}
+
+.btn-sortir:hover {
+    background-color: #dc2626 !important;
+}
+
+/* Panells d'administració */
+.admin-panel {
+    padding: 3%;
+    background-color: white;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+    /* Ombra externa del contingut */
+    margin: 2%;
+    /* Li dóna cert marge dintre el seu espai */
+    border-radius: 10px;
+}
+
+.admin-panel h2 {
+    color: #3b82f6;
+    /* Títol en blau corporatiu */
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 10px;
+    margin-top: 0;
+}
+
+.admin-panel p {
+    color: #475569;
+    font-size: 1.2vw;
+    line-height: 1.6;
+}
