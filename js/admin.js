@@ -1,11 +1,19 @@
 document.addEventListener('DOMContentLoaded', async () => {
+    console.log("Admin page loading, waiting for auth...");
+    // Esperar a que la autenticación (callback) termine
+    await auth.waitReady();
 
     const autorizado = await auth.isAuthorized();
+    console.log("Admin authorized:", autorizado);
 
     if (!autorizado) {
+        console.warn("No autorizado, redirigiendo a login...");
         window.location.href = "login.html";
         return;
     }
+
+
+    document.body.style.display = 'block';
 
     const btns = document.querySelectorAll('.admin-btn:not(.btn-sortir)');
     const panels = document.querySelectorAll('.view-panel');

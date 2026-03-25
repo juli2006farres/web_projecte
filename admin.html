@@ -10,15 +10,12 @@
     <link rel="stylesheet" href="css/admin.css">
     <script src="js/config.js?v=v3"></script>
     <script src="js/auth.js?v=v3"></script>
-    <script>
-        // Check authentication before loading the rest of the page
-        document.addEventListener('DOMContentLoaded', () => {
-            if (!auth.isAuthenticated()) {
-                console.log("No token found, redirecting to login...");
-                auth.login(); // This will redirect to Cognito login
-            }
-        });
-    </script>
+
+    <style>
+        body {
+            display: none;
+        }
+    </style>
 </head>
 
 <body>

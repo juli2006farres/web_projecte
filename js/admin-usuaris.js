@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function deleteUser(id) {
         try {
-            const token = auth.getRequestToken();
+            const token = getRequestToken();
             const response = await fetch(`${apiBase}/usuaris/usuaris/${id}`, {
                 method: 'DELETE',
                 headers: {

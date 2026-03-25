@@ -55,26 +55,92 @@ function buildCognitoUrl(path, params) {
     return `https://${COGNITO_CONFIG.domain}${path}?${query}`;
 }
 
-function initializeFromCallback() {
-    if (!window.location.hash) return false;
-
-    const params = new URLSearchParams(window.location.hash.slice(1));
-    const accessToken = params.get('access_token');
-    const idToken = params.get('id_token');
-
-    if (!accessToken || !idToken) {
-        if (window.location.hash.includes('access_token') || window.location.hash.includes('id_token') || window.location.hash.includes('error')) {
-            console.log("Malformed callback detected, cleaning URL anyway");
-            window.history.replaceState({}, document.title, window.location.pathname);
-        }
+async function checkEmailAllowed(email) {
+    if (!email) {
+        console.warn("checkEmailAllowed: No email provided");
         return false;
     }
+    const cleanEmail = email.trim().toLowerCase();
+    try {
+        const apiBase = window.API_BASE || 'https://api.agenda.ianordonez.cat';
+        const url = apiBase + "/correos-permitidos/correos-permitidos/" + encodeURIComponent(cleanEmail);
+        console.log("checkEmailAllowed: Verification URL:", url);
 
-    console.log("Tokens found in URL, saving and cleaning...");
-    setStoredTokens({ accessToken, idToken });
-    window.history.replaceState({}, document.title, window.location.pathname);
-    return true;
+        const response = await fetch(url);
+        console.log("checkEmailAllowed: HTTP Status:", response.status);
+
+        if (response.ok) {
+            const text = await response.text();
+            console.log("checkEmailAllowed: Response body:", text);
+            if (!text || text === "null") return false;
+
+            try {
+                const data = JSON.parse(text);
+                if (!data || !data.correo) return false;
+
+                const dbEmail = data.correo.trim().toLowerCase();
+                const match = dbEmail === cleanEmail;
+                console.log("checkEmailAllowed: Match result:", match, "| JWT:", cleanEmail, "| DB:", dbEmail);
+                return match;
+            } catch (e) {
+                console.error("checkEmailAllowed: Parse error:", e);
+                return false;
+            }
+        }
+        return false;
+    } catch (error) {
+        console.error("checkEmailAllowed: Fetch error:", error);
+        return false;
+    }
 }
+
+
+let initPromise = null;
+let isInitializing = false;
+
+
+async function initializeFromCallback() {
+    if (isInitializing) return false;
+    if (!window.location.hash) return false;
+
+    isInitializing = true;
+    try {
+
+        const params = new URLSearchParams(window.location.hash.slice(1));
+        const accessToken = params.get('access_token');
+        const idToken = params.get('id_token');
+
+        if (!accessToken || !idToken) {
+            if (window.location.hash.includes('access_token') || window.location.hash.includes('id_token') || window.location.hash.includes('error')) {
+                console.log("Malformed callback detected, cleaning URL anyway");
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+            return false;
+        }
+
+        console.log("Tokens found in URL, checking authorization...");
+        const claims = parseJwt(idToken);
+        const email = claims?.email;
+
+        const isAllowed = await checkEmailAllowed(email);
+
+        if (isAllowed) {
+            console.log("User authorized, saving tokens...");
+            setStoredTokens({ accessToken, idToken });
+            window.history.replaceState({}, document.title, window.location.pathname);
+            return true;
+        } else {
+            console.warn("User NOT authorized, ensuring no tokens are saved.");
+            clearStoredTokens(); // Explicitly clear any existing tokens
+            window.history.replaceState({}, document.title, window.location.pathname);
+            alert("El teu correu (" + email + ") no està autoritzat per accedir a aquesta aplicació.");
+            return false;
+        }
+    } finally {
+        isInitializing = false;
+    }
+}
+
 
 function getAccessToken() {
     const tokens = getStoredTokens();
@@ -148,19 +214,7 @@ const auth = {
     isAuthorized: async () => {
         const user = auth.getUser();
         if (!user || !user.email) return false;
-        try {
-            const response = await fetch("http://localhost:8080/correos-permitidos/correos-permitidos/" + user.email);
-            if (response.ok) {
-                const data = await response.json()
-                return data != null;
-            } else {
-                return false
-            }
-        } catch (error) {
-            console.error("Error checking authorization:", error);
-            return false;
-        }
-
+        return await checkEmailAllowed(user.email);
     },
     logout: () => {
         const shouldRedirectToCognito = auth.isConfigured();
@@ -173,14 +227,28 @@ const auth = {
             logout_uri: COGNITO_CONFIG.logoutUri
         });
         window.location.href = logoutUrl;
+    },
+    waitReady: async () => {
+        if (!initPromise) {
+            initPromise = window.checkAuth();
+        }
+        return initPromise;
     }
 };
 
 window.auth = auth;
-window.checkAuth = () => {
-    if (auth.initializeFromCallback()) {
-        console.log("Logged in from callback");
+window.checkAuth = async () => {
+    if (!initPromise) {
+        initPromise = auth.initializeFromCallback();
     }
+    const result = await initPromise;
+    if (result) {
+        console.log("Logged in from callback");
+        if (typeof window.onAuthSuccess === 'function') {
+            window.onAuthSuccess();
+        }
+    }
+    return result;
 };
 
 document.addEventListener('DOMContentLoaded', window.checkAuth);
