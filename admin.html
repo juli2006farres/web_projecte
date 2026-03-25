@@ -5,11 +5,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panell d'Administració - AgendaTIC</title>
+    <script>
+        // Aplicar preferències abans de carregar CSS per evitar flash
+        const savedColor = localStorage.getItem('pref_color');
+        if (savedColor) {
+            document.documentElement.style.setProperty('--color-primary', savedColor);
+        }
+        
+        // Aplicar nom tan bon punt el DOM ho permeti
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedName = localStorage.getItem('pref_nom');
+            if (savedName) {
+                const headerH1 = document.querySelector('header h1');
+                if (headerH1) {
+                    headerH1.textContent = savedName + ' - Administració';
+                }
+            }
+        });
+    </script>
     <!-- Utilitzarem l'estil principal i un específic per a l'admin -->
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/admin.css">
-    <script src="js/config.js?v=v3"></script>
-    <script src="js/auth.js?v=v3"></script>
+    <link rel="stylesheet" href="css/main/styles.css">
+    <link rel="stylesheet" href="css/admin/admin.css">
+    <script src="js/core/config.js?v=v3"></script>
+    <script src="js/core/auth.js?v=v3"></script>
     <!--
     
     <script>
@@ -42,6 +60,7 @@
         <aside class="admin-sidebar">
             <button id="btn-usuaris" class="admin-btn active">Usuaris</button>
             <button id="btn-activitats" class="admin-btn">Activitats</button>
+            <button id="btn-preferencies" class="admin-btn">Preferències</button>
             <button onclick="auth.logout()" class="admin-btn btn-sortir">Sortir</button>
         </aside>
 
@@ -54,12 +73,101 @@
                 <iframe src="admin-activitats.html" width="100%" height="100%" frameborder="0"></iframe>
             </div>
 
+            <div id="view-preferencies" class="view-panel">
+                <div class="admin-panel">
+                    <h2>Aparença</h2>
+                    <p>Tria el color principal de l'aplicació.</p>
+                    <div style="margin-bottom: 10px;">
+                        <label for="color-picker">Color principal:</label>
+                        <input type="color" id="color-picker" value="#3b82f6" style="margin-left: 10px; cursor: pointer;">
+                    </div>
+                    <button id="btn-save-color" class="admin-btn" style="padding: 10px 15px; font-size: 1rem; width: auto; background-color: var(--color-primary); color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 5px;">Desar</button>
+                </div>
+
+                <div class="admin-panel">
+                    <h2>Nom i identitat</h2>
+                    <p>Canvia el nom de l'aplicació que apareix a la capçalera.</p>
+                    <div style="margin-bottom: 10px;">
+                        <label for="app-name">Nom:</label>
+                        <input type="text" id="app-name" value="AgendaTIC" style="padding: 5px; border: 1px solid #ccc; border-radius: 4px; width: 250px; margin-left: 10px;">
+                    </div>
+                    <button id="btn-save-name" class="admin-btn" style="padding: 10px 15px; font-size: 1rem; width: auto; background-color: var(--color-primary); color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 5px;">Desar</button>
+                </div>
+
+                <div class="admin-panel">
+                    <h2>Configuració del calendari</h2>
+                    <p>Ajusta com es mostra el calendari.</p>
+                    <div style="margin-bottom: 10px;">
+                        <label for="first-day">Primer dia de la setmana:</label>
+                        <select id="first-day" style="padding: 5px; border: 1px solid #ccc; border-radius: 4px; margin-left: 10px;">
+                            <option value="Dilluns">Dilluns</option>
+                            <option value="Diumenge">Diumenge</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <label for="date-format">Format de data:</label>
+                        <select id="date-format" style="padding: 5px; border: 1px solid #ccc; border-radius: 4px; margin-left: 10px;">
+                            <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                            <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                        </select>
+                    </div>
+                    <button id="btn-save-calendar" class="admin-btn" style="padding: 10px 15px; font-size: 1rem; width: auto; background-color: var(--color-primary); color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 5px;">Desar</button>
+                </div>
+            </div>
+
+            <script>
+                document.addEventListener('DOMContentLoaded', () => {
+                    const root = document.documentElement;
+                    const headerH1 = document.querySelector('header h1');
+                    
+                    const colorPicker = document.getElementById('color-picker');
+                    const appNameInput = document.getElementById('app-name');
+                    const firstDaySelect = document.getElementById('first-day');
+                    const dateFormatSelect = document.getElementById('date-format');
+                    
+                    const btnSaveColor = document.getElementById('btn-save-color');
+                    const btnSaveName = document.getElementById('btn-save-name');
+                    const btnSaveCalendar = document.getElementById('btn-save-calendar');
+                    
+                    // Inicialitzar valors des de localStorage als inputs
+                    colorPicker.value = localStorage.getItem('pref_color') || '#3b82f6';
+                    appNameInput.value = localStorage.getItem('pref_nom') || 'AgendaTIC';
+                    firstDaySelect.value = localStorage.getItem('pref_primer_dia') || 'Dilluns';
+                    dateFormatSelect.value = localStorage.getItem('pref_format_data') || 'DD/MM/YYYY';
+                    
+                    // Secció Aparença
+                    colorPicker.addEventListener('input', (e) => {
+                        root.style.setProperty('--color-primary', e.target.value);
+                    });
+                    btnSaveColor.addEventListener('click', () => {
+                        localStorage.setItem('pref_color', colorPicker.value);
+                        alert('Color desat correctament.');
+                    });
+                    
+                    // Secció Nom i identitat
+                    btnSaveName.addEventListener('click', () => {
+                        const newName = appNameInput.value.trim() || 'AgendaTIC';
+                        localStorage.setItem('pref_nom', newName);
+                        if (headerH1) {
+                            headerH1.textContent = newName + ' - Administració';
+                        }
+                        alert('Nom desat correctament.');
+                    });
+                    
+                    // Secció Configuració del calendari
+                    btnSaveCalendar.addEventListener('click', () => {
+                        localStorage.setItem('pref_primer_dia', firstDaySelect.value);
+                        localStorage.setItem('pref_format_data', dateFormatSelect.value);
+                        alert('Configuració del calendari desada correctament.');
+                    });
+                });
+            </script>
 
         </section>
     </main>
 
-    <script src="js/clock.js"></script>
-    <script src="js/admin.js"></script>
+    <script src="js/core/clock.js"></script>
+    <script src="js/admin/admin.js"></script>
 </body>
 
 </html>

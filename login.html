@@ -5,7 +5,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - AgendaTIC</title>
-    <link rel="stylesheet" href="css/login.css">
+    <link rel="stylesheet" href="css/main/login.css">
+    <script>
+        // Aplicar preferències (color i nom) abans de renderitzar
+        const savedColor = localStorage.getItem('pref_color');
+        if (savedColor) {
+            document.documentElement.style.setProperty('--color-primary', savedColor);
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedName = localStorage.getItem('pref_nom');
+            if (savedName) {
+                const h1 = document.querySelector('header h1');
+                if (h1) h1.textContent = savedName;
+            }
+        });
+    </script>
     <script src="js/config.js?v=v2"></script>
 </head>
 
@@ -33,7 +47,7 @@
             </div>
         </div>
     </main>
-    <script src="js/auth.js?v=v2"></script>
+    <script src="js/core/auth.js?v=v2"></script>
 </body>
 
 </html>

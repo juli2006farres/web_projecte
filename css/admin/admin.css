@@ -42,7 +42,7 @@
 
 /* Opcions seleccionades i hover per admin */
 .admin-sidebar button.active {
-    background-color: #3b82f6;
+    background-color: var(--color-primary);
     /* Blau marca d'AgendaTIC */
     width: 85%;
     font-weight: bold;
@@ -75,7 +75,7 @@
 }
 
 .admin-panel h2 {
-    color: #3b82f6;
+    color: var(--color-primary);
     /* Títol en blau corporatiu */
     border-bottom: 2px solid #e2e8f0;
     padding-bottom: 10px;
@@ -87,3 +87,8 @@
     font-size: 1.2vw;
     line-height: 1.6;
 }
+
+/* El panell de preferències necessita scroll per mostrar totes les targetes */
+#view-preferencies {
+    overflow-y: auto;
+}
