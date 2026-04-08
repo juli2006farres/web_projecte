@@ -5,8 +5,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AgendaTIC</title>
-    <!-- CSS enllaçat de la nova carpeta -->
+    
+    <!-- FullCalendar CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" rel="stylesheet" />
+    
+    <!-- El teu CSS principal -->
     <link rel="stylesheet" href="css/main/styles.css">
+    
     <script>
         // Aplicar preferències (color i nom) abans de renderitzar
         const savedColor = localStorage.getItem('pref_color');
@@ -31,33 +36,25 @@
             <h1>AgendaTIC</h1>
             <p id="current-time">18/2/2026 - 16:49:20</p>
         </div>
-        <a href="login.html" class="user-icon" style="text-decoration: none; color: black;">
-            👤
-        </a>
     </header>
 
     <main>
-        <aside>
-            <button id="btn-ateca" class="btn-ateca">ATECA</button>
-            <button id="btn-agora" class="btn-agora">AGORA</button>
+        <aside id="sidebar-menu">
+            <div id="loading-sales" style="color: #666; text-align: center; padding: 20px; width: 100%;">Carregant sales...</div>
         </aside>
 
         <section class="content">
             <div id="view-home" class="view-panel active">
                 <img src="img/consejos-imagenes.jpg" alt="Aula">
             </div>
-
-            <div id="view-agora" class="view-panel">
-                <iframe src="agora.html" width="100%" height="100%" frameborder="0"></iframe>
-            </div>
-
-            <div id="view-ateca" class="view-panel">
-                <iframe src="ateca.html" width="100%" height="100%" frameborder="0"></iframe>
-            </div>
+            <!-- Els calendaris de cada sala s'injectaran aquí dinàmicament -->
         </section>
     </main>
 
-    <!-- JS enllaçat des de la nova carpeta js -->
+    <!-- FullCalendar JS -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+    
+    <!-- Els teus scripts -->
     <script src="js/pages/main.js"></script>
     <script src="js/core/clock.js"></script>
 </body>

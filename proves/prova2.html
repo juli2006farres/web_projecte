@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calendari d'Activitats</title>
+
+  <!-- FullCalendar CSS -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css"
+    rel="stylesheet"
+  />
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f7fb;
+      color: #1f2937;
+    }
+
+    .container {
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 25px;
+      color: #111827;
+    }
+
+    .top-layout {
+      display: grid;
+      grid-template-columns: 350px 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .form-card,
+    .info-card,
+    .calendar-card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+    }
+
+    .form-card h2,
+    .info-card h2 {
+      margin-top: 0;
+      margin-bottom: 15px;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+    }
+
+    label {
+      font-weight: bold;
+      margin-top: 12px;
+      margin-bottom: 6px;
+    }
+
+    input,
+    textarea,
+    button {
+      font-size: 14px;
+      border-radius: 10px;
+    }
+
+    input,
+    textarea {
+      padding: 10px 12px;
+      border: 1px solid #d1d5db;
+      outline: none;
+    }
+
+    input:focus,
+    textarea:focus {
+      border-color: #2563eb;
+    }
+
+    button {
+      margin-top: 18px;
+      padding: 12px;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      background: #2563eb;
+      color: white;
+      transition: 0.2s ease;
+    }
+
+    button:hover {
+      background: #1d4ed8;
+    }
+
+    .danger-btn {
+      background: #dc2626;
+    }
+
+    .danger-btn:hover {
+      background: #b91c1c;
+    }
+
+    .info-card ul {
+      padding-left: 18px;
+    }
+
+    .calendar-card {
+      padding: 15px;
+    }
+
+    #calendar {
+      max-width: 100%;
+    }
+
+    .fc .fc-toolbar-title {
+      font-size: 1.4rem;
+    }
+
+    @media (max-width: 900px) {
+      .top-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Calendari d'Activitats</h1>
+
+    <div class="top-layout">
+      <!-- Formulari -->
+      <div class="form-card">
+        <h2>Afegir activitat</h2>
+
+        <form id="activityForm">
+          <label for="title">Nom de l'activitat</label>
+          <input type="text" id="title" placeholder="Ex: Torneig de pàdel" required />
+
+          <label for="date">Data</label>
+          <input type="date" id="date" required />
+
+          <label for="time">Hora</label>
+          <input type="time" id="time" />
+
+          <label for="description">Descripció</label>
+          <textarea id="description" rows="4" placeholder="Info extra..."></textarea>
+
+          <label for="color">Color</label>
+          <input type="color" id="color" value="#3788d8" />
+
+          <button type="submit">Afegir activitat</button>
+        </form>
+      </div>
+
+      <!-- Info -->
+      <div class="info-card">
+        <h2>Com funciona</h2>
+        <p>Les activitats que afegeixis es guarden al navegador amb <strong>localStorage</strong>.</p>
+        <p>Això vol dir que:</p>
+        <ul>
+          <li>Es veuen al calendari al moment</li>
+          <li>Si refresques, segueixen allà</li>
+          <li>Encara no hi ha base de dades (després ho connecteu vosaltres)</li>
+        </ul>
+
+        <button id="clearEventsBtn" class="danger-btn">Esborrar totes les activitats</button>
+      </div>
+    </div>
+
+    <!-- Calendari -->
+    <div class="calendar-card">
+      <div id="calendar"></div>
+    </div>
+  </div>
+
+  <!-- FullCalendar JS -->
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const form = document.getElementById("activityForm");
+      const clearEventsBtn = document.getElementById("clearEventsBtn");
+      const calendarEl = document.getElementById("calendar");
+
+      // Recuperar activitats guardades al navegador
+      let savedEvents = JSON.parse(localStorage.getItem("calendarEvents")) || [];
+
+      // Crear calendari
+      const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: "dayGridMonth",
+        locale: "ca",
+        firstDay: 1, // dilluns
+        height: "auto",
+        headerToolbar: {
+          left: "prev,next today",
+          center: "title",
+          right: "dayGridMonth,timeGridWeek,listWeek"
+        },
+        buttonText: {
+          today: "Avui",
+          month: "Mes",
+          week: "Setmana",
+          list: "Llista"
+        },
+        events: savedEvents,
+        eventClick: function (info) {
+          const event = info.event;
+          const desc = event.extendedProps.description || "Sense descripció";
+          const time = event.extendedProps.time || "Sense hora";
+
+          alert(
+            `Activitat: ${event.title}\nHora: ${time}\nDescripció: ${desc}`
+          );
+        }
+      });
+
+      calendar.render();
+
+      // Afegir activitat
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const title = document.getElementById("title").value.trim();
+        const date = document.getElementById("date").value;
+        const time = document.getElementById("time").value;
+        const description = document.getElementById("description").value.trim();
+        const color = document.getElementById("color").value;
+
+        if (!title || !date) {
+          alert("Si us plau, omple com a mínim el nom i la data.");
+          return;
+        }
+
+        // Si hi ha hora, fem datetime, si no només data
+        const startValue = time ? `${date}T${time}` : date;
+
+        const newEvent = {
+          title: title,
+          start: startValue,
+          color: color,
+          extendedProps: {
+            description: description,
+            time: time || ""
+          }
+        };
+
+        // Afegir al calendari visual
+        calendar.addEvent(newEvent);
+
+        // Guardar a localStorage
+        savedEvents.push(newEvent);
+        localStorage.setItem("calendarEvents", JSON.stringify(savedEvents));
+
+        // Netejar formulari
+        form.reset();
+        document.getElementById("color").value = "#3788d8";
+
+        alert("Activitat afegida correctament!");
+      });
+
+      // Esborrar totes les activitats
+      clearEventsBtn.addEventListener("click", function () {
+        const confirmDelete = confirm("Segur que vols esborrar totes les activitats?");
+        if (!confirmDelete) return;
+
+        localStorage.removeItem("calendarEvents");
+        savedEvents = [];
+
+        // Esborrar del calendari
+        calendar.getEvents().forEach(event => event.remove());
+
+        alert("Totes les activitats s'han esborrat.");
+      });
+    });
+  </script>
+</body>
+</html>

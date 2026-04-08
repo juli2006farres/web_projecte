@@ -25,6 +25,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // TODO: fetchActivitats() — carregar les activitats de l'API
     // TODO: form-afegir submit  → POST /activitats
+    
+
+
+
     // TODO: form-editar submit  → PUT  /activitats/:id
     // TODO: btn-confirmar-borrar → DELETE /activitats/:id
 

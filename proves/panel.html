@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Provador GETs · API Swagger</title>
+  <style>
+    /* (estils similars als anteriors, amb petits ajustos) */
+    * { box-sizing: border-box; margin: 0; }
+    body {
+      font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+      background: #f4f7fc;
+      padding: 20px;
+      color: #1e293b;
+    }
+    .container { max-width: 1400px; margin: 0 auto; }
+    h1 {
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 600; font-size: 1.9rem; margin-bottom: 20px;
+    }
+    .card {
+      background: white; border-radius: 20px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+      padding: 22px 24px; margin-bottom: 28px;
+      border: 1px solid #e9eef3;
+    }
+    .config-panel { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 20px; }
+    .url-group { flex: 2 1 300px; }
+    .url-input {
+      display: flex; align-items: center; background: #f8fafc;
+      border: 1px solid #cbd5e1; border-radius: 60px; padding: 2px 2px 2px 18px;
+    }
+    .url-input input {
+      flex: 1; border: none; background: transparent; padding: 12px 8px;
+      font-family: monospace; outline: none;
+    }
+    .url-input button {
+      background: #3b82f6; color: white; border: none;
+      padding: 10px 24px; border-radius: 60px; font-weight: 600; cursor: pointer;
+    }
+    .status-message {
+      margin-top: 12px; padding: 8px 16px; border-radius: 40px;
+      background: #f1f5f9; display: inline-block;
+    }
+    .endpoint-grid { display: flex; flex-direction: column; gap: 14px; }
+    .endpoint-item {
+      background: #fafcff; border-radius: 16px; padding: 16px 20px;
+      border: 1px solid #dee6ed; display: flex; flex-wrap: wrap; align-items: center; gap: 16px;
+    }
+    .method-badge {
+      background: #10b981; color: white; font-weight: 700; padding: 6px 14px;
+      border-radius: 60px; min-width: 70px; text-align: center;
+    }
+    .endpoint-path { font-family: monospace; flex: 2 1 260px; }
+    .btn {
+      border: none; padding: 8px 18px; border-radius: 40px; font-weight: 500;
+      cursor: pointer; background: white; border: 1px solid #cbd5e1;
+    }
+    .btn-primary { background: #3b82f6; border-color: #3b82f6; color: white; }
+    .response-area {
+      margin-top: 24px; background: #0b1120; border-radius: 18px;
+      padding: 20px; color: #e2e8f0;
+    }
+    .response-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .response-content {
+      font-family: 'SF Mono', Menlo, monospace; font-size: 0.9rem;
+      background: #1e293b; padding: 18px; border-radius: 12px;
+      max-height: 500px; overflow: auto; white-space: pre-wrap;
+    }
+    .status-tag {
+      background: #334155; color: #94a3b8; padding: 2px 10px;
+      border-radius: 30px; font-size: 0.8rem; margin-left: 12px;
+    }
+    .json-key { color: #7dd3fc; }
+    .json-string { color: #86efac; }
+    .json-number { color: #fbbf24; }
+    .json-boolean { color: #f472b6; }
+    .json-null { color: #cbd5e1; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>⚡ Provador de GETs <small>Swagger API</small></h1>
+
+  <div class="card">
+    <div class="config-panel">
+      <div class="url-group">
+        <label>🔗 Base URL</label>
+        <div class="url-input">
+          <input type="text" id="baseUrlInput" value="https://54.146.198.94/api">
+          <button id="fetchSpecBtn">Carregar endpoints</button>
+        </div>
+      </div>
+      <button class="btn" id="tryAltSpecBtn">⟳ Alternatiu</button>
+    </div>
+    <div id="statusMessage" class="status-message">⏳ Carrega l'spec per començar</div>
+    <div style="margin-top:8px; font-size:0.85rem;">📌 Si el certificat no és vàlid, obre <a href="#" id="apiLink" target="_blank">la IP</a> i accepta'l.</div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+      <h2 style="font-size:1.5rem;">📋 Endpoints GET</h2>
+      <span id="endpointCount" class="status-tag" style="background:#e2e8f0; color:#1e293b;">0</span>
+    </div>
+    <div id="endpointList" class="endpoint-grid">
+      <div style="padding:20px; text-align:center; color:#64748b;">Carrega l'especificació</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="response-header">
+      <h3>📤 Resposta <span id="responseStatusTag" class="status-tag"></span></h3>
+      <button class="btn" id="clearResponseBtn">Netejar</button>
+    </div>
+    <div id="responseContainer" class="response-content" style="color:#cbd5e1;">
+      Fes clic a "Provar" per veure la informació que retorna l'API.
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const baseUrlInput = document.getElementById('baseUrlInput');
+    const fetchSpecBtn = document.getElementById('fetchSpecBtn');
+    const tryAltSpecBtn = document.getElementById('tryAltSpecBtn');
+    const statusMsg = document.getElementById('statusMessage');
+    const endpointListDiv = document.getElementById('endpointList');
+    const endpointCountSpan = document.getElementById('endpointCount');
+    const responseContainer = document.getElementById('responseContainer');
+    const responseStatusTag = document.getElementById('responseStatusTag');
+    const clearResponseBtn = document.getElementById('clearResponseBtn');
+    const apiLink = document.getElementById('apiLink');
+
+    let currentSpec = null;
+    let baseUrl = baseUrlInput.value.trim();
+
+    function normalizeBaseUrl(url) { return url.replace(/\/+$/, ''); }
+    function updateApiLink() {
+      try { 
+        const u = new URL(baseUrl); 
+        apiLink.href = u.origin; 
+        apiLink.textContent = u.origin; 
+      } catch(e) { 
+        apiLink.href = "https://54.146.198.94"; 
+        apiLink.textContent = "https://54.146.198.94"; 
+      }
+    }
+
+    function setStatus(text, isError=false) {
+      statusMsg.textContent = text;
+      statusMsg.style.background = isError ? '#fee2e2' : '#f1f5f9';
+      statusMsg.style.color = isError ? '#b91c1c' : '#1e293b';
+    }
+
+    function getSpecUrls(base) {
+      const b = normalizeBaseUrl(base);
+      return [
+        `${b}/v3/api-docs`, `${b}/v3/api-docs.yaml`, `${b}/swagger.json`,
+        `${b}/swagger/v1/swagger.json`, `${b}/api-docs`, `${b}/openapi.json`
+      ];
+    }
+
+    async function attemptFetchSpec(manualBaseUrl) {
+      const base = normalizeBaseUrl(manualBaseUrl || baseUrlInput.value.trim());
+      baseUrl = base;
+      updateApiLink();
+      setStatus(`Cercant especificació a ${base} ...`);
+      const urls = getSpecUrls(base);
+      for (const url of urls) {
+        try {
+          setStatus(`Provant ${url}`);
+          const resp = await fetch(url, { headers: { 'Accept': 'application/json' } });
+          if (!resp.ok) continue;
+          const data = await resp.json();
+          if (data && (data.openapi || data.swagger || data.paths)) {
+            currentSpec = data;
+            setStatus(`✅ Carregat des de ${url}`);
+            renderEndpoints(data, base);
+            return;
+          }
+        } catch(e) {}
+      }
+      setStatus(`❌ No s'ha trobat OpenAPI. Prova "Alternatiu".`, true);
+      endpointListDiv.innerHTML = `<div style="padding:20px;color:#b91c1c;">No s'ha pogut carregar l'especificació.</div>`;
+      endpointCountSpan.textContent = '0';
+    }
+
+    async function tryAlternativeSpec() {
+      const base = normalizeBaseUrl(baseUrlInput.value.trim());
+      baseUrl = base; updateApiLink();
+      setStatus(`Intentant rutes alternatives...`);
+      const alt = [`${base}/swagger/docs/v1`, `${base}/v2/api-docs`, `${base}/swagger-resources`];
+      for (const u of alt) {
+        try {
+          const r = await fetch(u);
+          if (r.ok) {
+            const d = await r.json();
+            if (d && (d.swagger || d.openapi || d.paths)) {
+              currentSpec = d;
+              setStatus(`✅ Carregat des de ${u}`);
+              renderEndpoints(d, base);
+              return;
+            }
+          }
+        } catch(e) {}
+      }
+      const manual = prompt("Introdueix URL completa de l'especificació JSON:", `${base}/v3/api-docs`);
+      if (manual) {
+        try {
+          const r = await fetch(manual);
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          const d = await r.json();
+          currentSpec = d;
+          setStatus(`✅ Carregat manualment`);
+          renderEndpoints(d, base);
+        } catch(e) { setStatus(`Error: ${e.message}`, true); }
+      }
+    }
+
+    function extractGetEndpoints(spec) {
+      const paths = spec.paths || {};
+      const endpoints = [];
+      for (const [path, item] of Object.entries(paths)) {
+        if (item.get) {
+          const op = item.get;
+          const params = op.parameters || [];
+          endpoints.push({
+            path,
+            summary: op.summary || '',
+            pathParams: params.filter(p => p.in === 'path'),
+            queryParams: params.filter(p => p.in === 'query')
+          });
+        }
+      }
+      return endpoints.sort((a,b) => a.path.localeCompare(b.path));
+    }
+
+    function renderEndpoints(spec, base) {
+      const eps = extractGetEndpoints(spec);
+      endpointCountSpan.textContent = eps.length;
+      if (!eps.length) {
+        endpointListDiv.innerHTML = `<div style="padding:20px;">No hi ha GETs.</div>`;
+        return;
+      }
+      let html = '';
+      eps.forEach(ep => {
+        const hasParams = ep.pathParams.length > 0 || ep.queryParams.length > 0;
+        html += `<div class="endpoint-item">
+          <span class="method-badge">GET</span>
+          <span class="endpoint-path">${ep.path}</span>
+          <span style="color:#475569; flex:1;">${ep.summary || ''}</span>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-primary test-btn" data-path="${ep.path}" data-hasparams="${hasParams}">Provar</button>
+            <button class="btn copy-btn" data-url="${base}${ep.path}">📋 Copiar</button>
+          </div>
+        </div>`;
+      });
+      endpointListDiv.innerHTML = html;
+      document.querySelectorAll('.test-btn').forEach(b => {
+        b.addEventListener('click', () => testGetEndpoint(b.dataset.path, b.dataset.hasparams === 'true'));
+      });
+      document.querySelectorAll('.copy-btn').forEach(b => {
+        b.addEventListener('click', () => {
+          navigator.clipboard?.writeText(b.dataset.url);
+          setStatus(`URL copiada: ${b.dataset.url}`);
+        });
+      });
+    }
+
+    async function testGetEndpoint(pathTemplate, hasParams) {
+      const currentBase = normalizeBaseUrl(baseUrlInput.value.trim());
+      let finalPath = pathTemplate;
+      if (hasParams) {
+        let pathParams = [];
+        if (currentSpec?.paths?.[pathTemplate]?.get?.parameters) {
+          pathParams = currentSpec.paths[pathTemplate].get.parameters.filter(p => p.in === 'path');
+        }
+        if (pathParams.length) {
+          let filled = pathTemplate;
+          for (let p of pathParams) {
+            const val = prompt(`Valor per a "${p.name}":`);
+            if (val === null) { setStatus('Cancel·lat'); return; }
+            filled = filled.replace(`{${p.name}}`, encodeURIComponent(val));
+          }
+          finalPath = filled;
+        } else {
+          if (!confirm("Aquest endpoint podria necessitar paràmetres. Continuar sense?")) return;
+        }
+      }
+      
+      const fullUrl = `${currentBase}${finalPath}`;
+      setStatus(`Executant GET ${fullUrl} ...`);
+      
+      try {
+        const resp = await fetch(fullUrl, { headers: { 'Accept': 'application/json' } });
+        const status = resp.status;
+        const contentType = resp.headers.get('content-type');
+        let body, formatted;
+        
+        if (contentType?.includes('application/json')) {
+          body = await resp.json();
+          formatted = JSON.stringify(body, null, 2);
+        } else {
+          body = await resp.text();
+          formatted = body || '(cos buit)';
+        }
+        
+        // Actualitzem etiqueta d'estat
+        responseStatusTag.textContent = `${status} ${resp.statusText}`;
+        responseStatusTag.style.background = resp.ok ? '#166534' : '#7f1d1d';
+        responseStatusTag.style.color = 'white';
+        
+        // Mostrem el cos amb syntax highlighting simple
+        responseContainer.innerHTML = syntaxHighlight(formatted);
+        setStatus(`Resposta rebuda (${status})`, !resp.ok);
+      } catch (error) {
+        responseContainer.innerHTML = `<span style="color:#f87171;">Error: ${escapeHtml(error.message)}</span>`;
+        responseStatusTag.textContent = 'ERROR';
+        responseStatusTag.style.background = '#7f1d1d';
+        setStatus(`Error de xarxa/CORS: ${error.message}`, true);
+      }
+    }
+
+    // Funció simple per acolorir JSON
+    function syntaxHighlight(json) {
+      json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+        let cls = 'json-number';
+        if (/^"/.test(match)) {
+          if (/:$/.test(match)) {
+            cls = 'json-key';
+          } else {
+            cls = 'json-string';
+          }
+        } else if (/true|false/.test(match)) {
+          cls = 'json-boolean';
+        } else if (/null/.test(match)) {
+          cls = 'json-null';
+        }
+        return '<span class="' + cls + '">' + match + '</span>';
+      });
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function clearResponse() {
+      responseContainer.innerHTML = 'Fes clic a "Provar" per veure la informació que retorna l\'API.';
+      responseStatusTag.textContent = '';
+      responseStatusTag.style.background = '#334155';
+    }
+
+    fetchSpecBtn.addEventListener('click', () => attemptFetchSpec(baseUrlInput.value.trim()));
+    tryAltSpecBtn.addEventListener('click', tryAlternativeSpec);
+    clearResponseBtn.addEventListener('click', clearResponse);
+    baseUrlInput.addEventListener('keypress', e => { if(e.key==='Enter') fetchSpecBtn.click(); });
+    baseUrlInput.addEventListener('input', updateApiLink);
+    window.addEventListener('load', () => { updateApiLink(); setStatus('Preparat. Introdueix la URL base.'); });
+  })();
+</script>
+</body>
+</html>
