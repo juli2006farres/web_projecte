@@ -1,173 +1,138 @@
 <!DOCTYPE html>
 <html lang="ca">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panell d'Administració - AgendaTIC</title>
-    <script>
-        // Aplicar preferències abans de carregar CSS per evitar flash
-        const savedColor = localStorage.getItem('pref_color');
-        if (savedColor) {
-            document.documentElement.style.setProperty('--color-primary', savedColor);
-        }
-        
-        // Aplicar nom tan bon punt el DOM ho permeti
-        document.addEventListener('DOMContentLoaded', () => {
-            const savedName = localStorage.getItem('pref_nom');
-            if (savedName) {
-                const headerH1 = document.querySelector('header h1');
-                if (headerH1) {
-                    headerH1.textContent = savedName + ' - Administració';
-                }
-            }
-        });
-    </script>
-    <!-- Utilitzarem l'estil principal i un específic per a l'admin -->
-    <link rel="stylesheet" href="css/main/styles.css">
-    <link rel="stylesheet" href="css/admin/admin.css">
-    <script src="js/core/config.js?v=v3"></script>
-    <script src="js/core/auth.js?v=v3"></script>
-    <!--
-    
-    <script>
-            // Check authentication before loading the rest of the page
-        document.addEventListener('DOMContentLoaded', () => {
-            if (!auth.isAuthenticated()) {
-                console.log("No token found, redirecting to login...");
-                auth.login(); // This will redirect to Cognito login
-            }
-        });
-        
-    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>AgendaTIC · Administració</title>
 
-    -->
-    
+    <!-- Font Awesome per icones (opcional) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <!-- Estils del panell admin -->
+    <link rel="stylesheet" href="./css/admin/admin.css">
 </head>
-
 <body>
-    <header>
-        <div class="header-info">
-            <h1>AgendaTIC - Administració</h1>
-            <p id="current-time">18/2/2026 - 16:49:20</p>
+
+<header>
+    <div class="header-info">
+        <h1 id="admin-header-title">Panell d'Administració</h1>
+        <p id="admin-current-time">Carregant hora...</p>
+    </div>
+    <div class="admin-badge">
+        <i class="fas fa-user-shield"></i> Administrador
+    </div>
+</header>
+
+<main>
+    <!-- Sidebar amb botons d'administració -->
+    <aside id="admin-sidebar">
+        <button class="admin-nav-btn active" data-view="dashboard">
+            <i class="fas fa-tachometer-alt"></i> Panell
+        </button>
+        <button class="admin-nav-btn" data-view="users">
+            <i class="fas fa-users"></i> Usuaris
+        </button>
+        <button class="admin-nav-btn" data-view="activities">
+            <i class="fas fa-calendar-alt"></i> Activitats
+        </button>
+        <button class="admin-nav-btn" data-view="rooms">
+            <i class="fas fa-door-open"></i> Sales
+        </button>
+        <div style="flex:1;"></div> <!-- espaiador per separar "Sortir" avall -->
+        <button class="admin-nav-btn logout-btn" id="logout-btn">
+            <i class="fas fa-sign-out-alt"></i> Sortir
+        </button>
+    </aside>
+
+    <!-- Contingut dinàmic -->
+    <section class="admin-content">
+        <!-- Panell inicial (dashboard) -->
+        <div id="view-dashboard" class="admin-view active">
+            <div class="dashboard-grid">
+                <div class="stat-card">
+                    <i class="fas fa-users"></i>
+                    <h3>Total Usuaris</h3>
+                    <p id="stat-users">—</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-calendar-check"></i>
+                    <h3>Activitats Actives</h3>
+                    <p id="stat-activities">—</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-door-closed"></i>
+                    <h3>Sales Disponibles</h3>
+                    <p id="stat-rooms">—</p>
+                </div>
+            </div>
+            <div class="recent-activity">
+                <h2>Activitat recent</h2>
+                <div id="recent-list">Carregant...</div>
+            </div>
         </div>
-        <div class="user-icon" style="cursor: default;">
-            ⚙️
+
+        <!-- Vista d'usuaris -->
+        <div id="view-users" class="admin-view">
+            <div class="view-header">
+                <h2>Gestió d'Usuaris</h2>
+            </div>
+            <div class="table-container">
+                <table class="admin-table">
+                    <thead>
+                        <tr><th>ID</th><th>Nom</th><th>Correu</th><th>Rol</th><th>Accions</th></tr>
+                    </thead>
+                    <tbody id="users-table-body">
+                        <!-- S'omplirà via JS -->
+                        <tr><td colspan="5">Carregant usuaris...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
-    </header>
 
-    <main>
-        <aside class="admin-sidebar">
-            <button id="btn-usuaris" class="admin-btn active">Usuaris</button>
-            <button id="btn-activitats" class="admin-btn">Activitats</button>
-            <button id="btn-preferencies" class="admin-btn">Preferències</button>
-            <button onclick="auth.logout()" class="admin-btn btn-sortir">Sortir</button>
-        </aside>
-
-        <section class="content">
-            <div id="view-usuaris" class="view-panel active">
-                <iframe src="admin-usuaris.html?v=v4" width="100%" height="100%" frameborder="0"></iframe>
+        <!-- Vista d'activitats -->
+        <div id="view-activities" class="admin-view">
+            <div class="view-header">
+                <h2>Gestió d'Activitats</h2>
+                <button class="admin-action-btn"><i class="fas fa-plus"></i> Nova Activitat</button>
             </div>
-
-            <div id="view-activitats" class="view-panel">
-                <iframe src="admin-activitats.html" width="100%" height="100%" frameborder="0"></iframe>
+            <div class="table-container">
+                <table class="admin-table">
+                    <thead>
+                        <tr><th>ID</th><th>Títol</th><th>Sala</th><th>Data</th><th>Hora</th><th>Activa</th><th>Accions</th></tr>
+                    </thead>
+                    <tbody id="activities-table-body">
+                        <tr><td colspan="7">Carregant activitats...</td></tr>
+                    </tbody>
+                </table>
             </div>
+        </div>
 
-            <div id="view-preferencies" class="view-panel">
-                <div class="admin-panel">
-                    <h2>Aparença</h2>
-                    <p>Tria el color principal de l'aplicació.</p>
-                    <div style="margin-bottom: 10px;">
-                        <label for="color-picker">Color principal:</label>
-                        <input type="color" id="color-picker" value="#3b82f6" style="margin-left: 10px; cursor: pointer;">
-                    </div>
-                    <button id="btn-save-color" class="admin-btn" style="padding: 10px 15px; font-size: 1rem; width: auto; background-color: var(--color-primary); color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 5px;">Desar</button>
-                </div>
-
-                <div class="admin-panel">
-                    <h2>Nom i identitat</h2>
-                    <p>Canvia el nom de l'aplicació que apareix a la capçalera.</p>
-                    <div style="margin-bottom: 10px;">
-                        <label for="app-name">Nom:</label>
-                        <input type="text" id="app-name" value="AgendaTIC" style="padding: 5px; border: 1px solid #ccc; border-radius: 4px; width: 250px; margin-left: 10px;">
-                    </div>
-                    <button id="btn-save-name" class="admin-btn" style="padding: 10px 15px; font-size: 1rem; width: auto; background-color: var(--color-primary); color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 5px;">Desar</button>
-                </div>
-
-                <div class="admin-panel">
-                    <h2>Configuració del calendari</h2>
-                    <p>Ajusta com es mostra el calendari.</p>
-                    <div style="margin-bottom: 10px;">
-                        <label for="first-day">Primer dia de la setmana:</label>
-                        <select id="first-day" style="padding: 5px; border: 1px solid #ccc; border-radius: 4px; margin-left: 10px;">
-                            <option value="Dilluns">Dilluns</option>
-                            <option value="Diumenge">Diumenge</option>
-                        </select>
-                    </div>
-                    <div style="margin-bottom: 10px;">
-                        <label for="date-format">Format de data:</label>
-                        <select id="date-format" style="padding: 5px; border: 1px solid #ccc; border-radius: 4px; margin-left: 10px;">
-                            <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-                            <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-                        </select>
-                    </div>
-                    <button id="btn-save-calendar" class="admin-btn" style="padding: 10px 15px; font-size: 1rem; width: auto; background-color: var(--color-primary); color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 5px;">Desar</button>
-                </div>
+        <!-- Vista de sales -->
+        <div id="view-rooms" class="admin-view">
+            <div class="view-header">
+                <h2>Gestió de Sales</h2>
+                <button class="admin-action-btn"><i class="fas fa-plus"></i> Nova Sala</button>
             </div>
+            <div class="table-container">
+                <table class="admin-table">
+                    <thead>
+                        <tr><th>ID</th><th>Nom</th><th>Color</th><th>Accions</th></tr>
+                    </thead>
+                    <tbody id="rooms-table-body">
+                        <tr><td colspan="4">Carregant sales...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+</main>
 
-            <script>
-                document.addEventListener('DOMContentLoaded', () => {
-                    const root = document.documentElement;
-                    const headerH1 = document.querySelector('header h1');
-                    
-                    const colorPicker = document.getElementById('color-picker');
-                    const appNameInput = document.getElementById('app-name');
-                    const firstDaySelect = document.getElementById('first-day');
-                    const dateFormatSelect = document.getElementById('date-format');
-                    
-                    const btnSaveColor = document.getElementById('btn-save-color');
-                    const btnSaveName = document.getElementById('btn-save-name');
-                    const btnSaveCalendar = document.getElementById('btn-save-calendar');
-                    
-                    // Inicialitzar valors des de localStorage als inputs
-                    colorPicker.value = localStorage.getItem('pref_color') || '#3b82f6';
-                    appNameInput.value = localStorage.getItem('pref_nom') || 'AgendaTIC';
-                    firstDaySelect.value = localStorage.getItem('pref_primer_dia') || 'Dilluns';
-                    dateFormatSelect.value = localStorage.getItem('pref_format_data') || 'DD/MM/YYYY';
-                    
-                    // Secció Aparença
-                    colorPicker.addEventListener('input', (e) => {
-                        root.style.setProperty('--color-primary', e.target.value);
-                    });
-                    btnSaveColor.addEventListener('click', () => {
-                        localStorage.setItem('pref_color', colorPicker.value);
-                        alert('Color desat correctament.');
-                    });
-                    
-                    // Secció Nom i identitat
-                    btnSaveName.addEventListener('click', () => {
-                        const newName = appNameInput.value.trim() || 'AgendaTIC';
-                        localStorage.setItem('pref_nom', newName);
-                        if (headerH1) {
-                            headerH1.textContent = newName + ' - Administració';
-                        }
-                        alert('Nom desat correctament.');
-                    });
-                    
-                    // Secció Configuració del calendari
-                    btnSaveCalendar.addEventListener('click', () => {
-                        localStorage.setItem('pref_primer_dia', firstDaySelect.value);
-                        localStorage.setItem('pref_format_data', dateFormatSelect.value);
-                        alert('Configuració del calendari desada correctament.');
-                    });
-                });
-            </script>
+<!-- JavaScript del panell (es crearà després) -->
+<script src="js/admin/admin.js"></script>
 
-        </section>
-    </main>
 
-    <script src="js/core/clock.js"></script>
-    <script src="js/admin/admin.js"></script>
 </body>
-
 </html>
+
+
+

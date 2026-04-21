@@ -1,94 +1,365 @@
-/* Estils addicionals per l'arxiu admin.html */
+/* ========== HERÈNCIA DE L'ESTÈTICA PRINCIPAL ========== */
+:root {
+    --color-primary: #2563eb;
+    --color-primary-light: #3b82f6;
+    --color-bg: #f8fafc;
+    --color-sidebar: #ffffff;
+    --color-card: #ffffff;
+    --shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.02);
+    --border-radius: 20px;
+}
 
-/* Canviem l'aside de l'administrador perquè sigui diferent de l'usuari final */
-.admin-sidebar {
-    width: 25%;
-    /* L'admin necessita una mica més d'espai al lateral */
-    height: 100%;
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', 'Arial', system-ui, sans-serif;
+    background: var(--color-bg);
+    height: 100vh;
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
-    align-items: center;
-    background-color: #f0f4f8;
-    /* Gris-blau claret i elegant */
-    padding-top: 5%;
+    overflow: hidden;
+    color: #1e293b;
 }
 
-.admin-sidebar button,
-.admin-sidebar a {
+/* ========== CAPÇALERA (igual que original) ========== */
+header {
+    background: var(--color-primary);
+    color: white;
+    padding: 1rem 2.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 6px -2px rgba(0,0,0,0.1);
+    flex-shrink: 0;
+}
+
+.header-info h1 {
+    font-size: 2.2rem;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+}
+
+.header-info p {
+    font-size: 1.2rem;
+    opacity: 0.9;
+    margin-top: 4px;
+    font-weight: 400;
+}
+
+.admin-badge {
+    background: rgba(255,255,255,0.2);
+    padding: 0.5rem 1.8rem;
+    border-radius: 40px;
+    font-size: 1.4rem;
+    font-weight: 500;
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255,255,255,0.3);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* ========== LAYOUT PRINCIPAL ========== */
+main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    padding: 20px;
+    gap: 20px;
+}
+
+/* --- SIDEBAR ADMIN --- */
+#admin-sidebar {
+    width: 280px;
+    background: var(--color-sidebar);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    padding: 20px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+}
+
+.admin-nav-btn {
+    background: white;
+    border: 2px solid #e2e8f0;
+    color: #1e293b;
+    padding: 16px 20px;
+    font-size: 1.3rem;
+    font-weight: 600;
+    border-radius: 60px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    letter-spacing: 0.3px;
+}
+
+.admin-nav-btn i {
+    width: 24px;
+    font-size: 1.4rem;
+    color: var(--color-primary);
+}
+
+.admin-nav-btn:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
+}
+
+.admin-nav-btn.active {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: white;
+    box-shadow: 0 8px 16px -6px rgba(37, 99, 235, 0.4);
+}
+
+.admin-nav-btn.active i {
+    color: white;
+}
+
+.logout-btn {
+    margin-top: 10px;
+    border-color: #fee2e2;
+    color: #b91c1c;
+}
+
+.logout-btn i {
+    color: #b91c1c;
+}
+
+.logout-btn:hover {
+    background: #fef2f2;
+    border-color: #fecaca;
+}
+
+/* --- CONTINGUT ADMIN --- */
+.admin-content {
+    flex: 1;
+    background: transparent;
+    border-radius: var(--border-radius);
+    overflow-y: auto;
+    min-width: 0;
+}
+
+.admin-view {
+    display: none;
+    height: 100%;
+}
+
+.admin-view.active {
+    display: block;
+}
+
+/* ========== PANELL DASHBOARD ========== */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background: var(--color-card);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    padding: 25px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    transition: transform 0.15s;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+}
+
+.stat-card i {
+    font-size: 3rem;
+    color: var(--color-primary);
+    margin-bottom: 15px;
+}
+
+.stat-card h3 {
+    font-size: 1.2rem;
+    font-weight: 500;
+    color: #64748b;
+    margin-bottom: 8px;
+}
+
+.stat-card p {
+    font-size: 2.8rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.recent-activity {
+    background: var(--color-card);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    padding: 25px;
+}
+
+.recent-activity h2 {
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: #0f172a;
+}
+
+#recent-list {
+    color: #475569;
+    font-size: 1.1rem;
+}
+
+/* ========== VISTES DE TAULA (usuaris, activitats, sales) ========== */
+.view-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.view-header h2 {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+.admin-action-btn {
+    background: var(--color-primary);
     color: white;
     border: none;
-    padding: 6% 0;
-    width: 80%;
-    font-size: 1.4vw;
-    margin-bottom: 5%;
-    border-radius: 10px;
-    /* Arrodonit per tots els costats */
+    padding: 12px 24px;
+    border-radius: 40px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
     cursor: pointer;
-    transition: all 0.3s ease;
-    text-align: center;
-    background-color: #94a3b8;
-    /* Gris plom neutral */
-    text-decoration: none;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3);
+    transition: all 0.15s;
 }
 
-.admin-sidebar button:hover,
-.admin-sidebar a:hover {
-    background-color: #64748b;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+.admin-action-btn:hover {
+    background: #1d4ed8;
+    transform: scale(0.98);
 }
 
-/* Opcions seleccionades i hover per admin */
-.admin-sidebar button.active {
-    background-color: var(--color-primary);
-    /* Blau marca d'AgendaTIC */
-    width: 85%;
-    font-weight: bold;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+.table-container {
+    background: var(--color-card);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    padding: 5px 0;
+    overflow-x: auto;
 }
 
-/* El botó sortir el posem a l'últim, donant espai i diferent color */
-.btn-sortir {
-    margin-top: auto;
-    /* Empeny el botó cap avall de l'aside */
-    margin-bottom: 20%;
-    /* Pensem en marges macos respecte a baix */
-    background-color: #ef4444 !important;
-    /* Vermell alerta / sortir */
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 1rem;
 }
 
-.btn-sortir:hover {
-    background-color: #dc2626 !important;
-}
-
-/* Panells d'administració */
-.admin-panel {
-    padding: 3%;
-    background-color: white;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
-    /* Ombra externa del contingut */
-    margin: 2%;
-    /* Li dóna cert marge dintre el seu espai */
-    border-radius: 10px;
-}
-
-.admin-panel h2 {
-    color: var(--color-primary);
-    /* Títol en blau corporatiu */
-    border-bottom: 2px solid #e2e8f0;
-    padding-bottom: 10px;
-    margin-top: 0;
-}
-
-.admin-panel p {
+.admin-table th {
+    padding: 18px 20px;
+    background: #f8fafc;
     color: #475569;
-    font-size: 1.2vw;
-    line-height: 1.6;
+    font-weight: 600;
+    border-bottom: 2px solid #e2e8f0;
 }
 
-/* El panell de preferències necessita scroll per mostrar totes les targetes */
-#view-preferencies {
-    overflow-y: auto;
-}
+.admin-table td {
+    padding: 16px 20px;
+    border-bottom: 1px solid #e2e8f0;
+    color: #1e293b;
+}
+
+.admin-table tr:last-child td {
+    border-bottom: none;
+}
+
+.admin-table tbody tr:hover {
+    background: #f8fafc;
+}
+
+/* Botons d'acció a la taula */
+.table-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.table-actions button {
+    background: none;
+    border: 1px solid #cbd5e1;
+    border-radius: 30px;
+    padding: 6px 14px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.1s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.table-actions .edit-btn {
+    color: #2563eb;
+    border-color: #2563eb;
+}
+
+.table-actions .delete-btn {
+    color: #dc2626;
+    border-color: #dc2626;
+}
+
+.table-actions button:hover {
+    background: #f1f5f9;
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 900px) {
+    main {
+        flex-direction: column;
+    }
+    #admin-sidebar {
+        width: 100%;
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+    .admin-nav-btn {
+        flex: 1 0 auto;
+        justify-content: center;
+    }
+    .logout-btn {
+        margin-top: 0;
+    }
+}
+
+@media (max-width: 600px) {
+    header {
+        padding: 1rem;
+    }
+    .header-info h1 {
+        font-size: 1.8rem;
+    }
+    .admin-badge {
+        font-size: 1rem;
+        padding: 0.3rem 1rem;
+    }
+}
+
+
+td {
+    justify-content: center;
+    text-align: center;
+}

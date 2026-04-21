@@ -1,184 +1,231 @@
-// ----- Configuració de l'API -----
-const API_SALAS_URL = 'https://54.146.198.94/api/sala/salas';
+(function(){
+    "use strict";
 
-// Elements del DOM
-const sidebar = document.getElementById('sidebar-menu');
-const contentSection = document.querySelector('.content');
-const loadingDiv = document.getElementById('loading-sales');
-const viewHome = document.getElementById('view-home');
-
-// Estat global
-let currentActiveButton = null;
-let currentActiveView = null;
-const calendars = new Map(); // Guardar instàncies de calendaris per id de sala
-
-// Funció per tornar a la vista inicial (home)
-function goHome() {
-    if (currentActiveButton) {
-        currentActiveButton.classList.remove('active');
-        currentActiveButton = null;
-    }
-    if (currentActiveView) {
-        currentActiveView.classList.remove('active');
-        currentActiveView = null;
-    }
-    viewHome.classList.add('active');
-}
-
-// Funció per obtenir la clau de localStorage per a una sala
-function getStorageKey(salaId) {
-    return `calendarEvents_sala_${salaId}`;
-}
-
-// Funció per crear un calendari dins d'un contenidor
-function createCalendar(container, salaId) {
-    const storageKey = getStorageKey(salaId);
-    const savedEvents = JSON.parse(localStorage.getItem(storageKey)) || [];
-
-    const calendar = new FullCalendar.Calendar(container, {
-        initialView: 'dayGridMonth',
-        locale: 'ca',
-        firstDay: 1,
-        height: '100%',
-        headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,listWeek'
-        },
-        buttonText: {
-            today: 'Avui',
-            month: 'Mes',
-            week: 'Setmana',
-            list: 'Llista'
-        },
-        events: savedEvents,
-        eventClick: function(info) {
-            const event = info.event;
-            const desc = event.extendedProps.description || 'Sense descripció';
-            const time = event.extendedProps.time || 'Sense hora especificada';
-            alert(`Activitat: ${event.title}\nHora: ${time}\nDescripció: ${desc}`);
-        }
-    });
-
-    calendar.render();
-    
-    // Guardar referència
-    calendars.set(salaId, calendar);
-    
-    // Exposar mètode per actualitzar esdeveniments (útil més endavant)
-    calendar.updateEvents = (newEvents) => {
-        calendar.removeAllEvents();
-        newEvents.forEach(ev => calendar.addEvent(ev));
-        localStorage.setItem(storageKey, JSON.stringify(newEvents));
+    // Configuración
+    const API = {
+        SALAS: 'https://34.230.76.192/api/sala/salas',
+        ACTIVITATS: 'https://34.230.76.192/api/activitats/activitats'
     };
 
-    return calendar;
-}
+    // DOM elements
+    const dom = {
+        sidebar: document.getElementById('sidebar-menu'),
+        dynamicViews: document.getElementById('dynamic-views'),
+        viewHome: document.getElementById('view-home'),
+        headerTitle: document.getElementById('header-title'),
+        roomBadge: document.getElementById('active-room-badge'),
+        time: document.getElementById('current-time')
+    };
 
-// Funció per crear un botó de sala i el seu panell amb calendari
-function createSalaButton(sala) {
-    // Crear botó
-    const button = document.createElement('button');
-    button.className = 'sala-btn';
-    button.textContent = sala.nom;
-    button.dataset.id = sala.id;
-    button.dataset.nom = sala.nom;
-    
-    // Crear vista panell per a aquesta sala
-    const viewPanel = document.createElement('div');
-    viewPanel.id = `view-sala-${sala.id}`;
-    viewPanel.className = 'view-panel';
-    
-    // Contenidor del calendari amb estil
-    const calendarWrapper = document.createElement('div');
-    calendarWrapper.className = 'calendar-wrapper';
-    const calendarEl = document.createElement('div');
-    calendarEl.id = `calendar-sala-${sala.id}`;
-    calendarEl.style.width = '100%';
-    calendarEl.style.height = '100%';
-    calendarWrapper.appendChild(calendarEl);
-    viewPanel.appendChild(calendarWrapper);
-    
-    contentSection.appendChild(viewPanel);
+    // Estado
+    let activeBtn = null, activeView = null;
+    const calendars = new Map();
+    const activitiesByRoom = new Map();
+    const roomColors = new Map();
 
-    // Crear el calendari quan el panell es mostri per primer cop? 
-    // Millor crear-lo immediatament per evitar retard, però podem fer-ho lazy.
-    // El crearem ara mateix perquè FullCalendar s'inicialitzi correctament.
-    // Esperem que el DOM estigui llest (el panell ja està afegit).
-    setTimeout(() => {
-        createCalendar(calendarEl, sala.id);
-    }, 10);
+    // ---------- MODAL ----------
+    function showModal(event) {
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        
+        const start = event.start, end = event.end;
+        const dateStr = start.toLocaleDateString('ca-ES', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+        const timeStr = start.toLocaleTimeString('ca-ES', { hour:'2-digit', minute:'2-digit' }) 
+                      + (end ? ' – ' + end.toLocaleTimeString('ca-ES', { hour:'2-digit', minute:'2-digit' }) : '');
+        
+        overlay.innerHTML = `
+            <div class="modal-card">
+                <button class="modal-close-icon" aria-label="Tancar">✕</button>
+                <div class="modal-title">${event.title || 'Activitat sense títol'}</div>
+                <div class="modal-datetime">
+                    <div><span style="font-weight:600;">📅</span> ${dateStr}</div>
+                    <div><span style="font-weight:600;">⏰</span> ${timeStr}</div>
+                </div>
+                <div class="modal-description">${event.extendedProps?.description || 'Sense descripció'}</div>
+                <button class="modal-close-btn">Entesos</button>
+            </div>
+        `;
+        
+        document.body.appendChild(overlay);
+        
+        const close = () => overlay.remove();
+        overlay.querySelector('.modal-close-icon').onclick = close;
+        overlay.querySelector('.modal-close-btn').onclick = close;
+        overlay.onclick = e => { if (e.target === overlay) close(); };
+    }
 
-    // Esdeveniment clic: toggle (si actiu -> home, si no -> activar)
-    button.addEventListener('click', () => {
-        if (button.classList.contains('active')) {
-            goHome();
-        } else {
-            // Desactivar l'anterior
-            if (currentActiveButton) {
-                currentActiveButton.classList.remove('active');
-            }
-            if (currentActiveView) {
-                currentActiveView.classList.remove('active');
-            }
-            // Activar aquest
-            button.classList.add('active');
-            viewPanel.classList.add('active');
-            viewHome.classList.remove('active');
+    // ---------- RELOJ ----------
+    function updateClock() {
+        const now = new Date();
+        dom.time.textContent = now.toLocaleString('ca-ES', {
+            day:'2-digit', month:'2-digit', year:'numeric',
+            hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false
+        }).replace(/\//g, '/');
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    // ---------- NAVEGACIÓN ----------
+    window.goHome = function() {
+        if (activeBtn) activeBtn.classList.remove('active');
+        if (activeView) activeView.classList.remove('active');
+        activeBtn = activeView = null;
+        dom.viewHome.classList.add('active');
+        dom.headerTitle.textContent = 'AgendaTIC';
+        dom.roomBadge.textContent = 'Selecciona una sala';
+    };
+
+    // ---------- CALENDARIO ----------
+    function formatEvent(act, color) {
+        return {
+            id: `api-${act.id_activitat}`,
+            title: act.titol,
+            start: `${act.data}T${act.horaInici}`,
+            end: `${act.data}T${act.horaFi}`,
+            extendedProps: { description: act.descripcio || '' },
+            color: color || '#3b82f6'
+        };
+    }
+
+    function updateCalendarEvents(roomId, calendar) {
+        const events = [
+            ...(activitiesByRoom.get(roomId) || []),
+            ...(JSON.parse(localStorage.getItem(`calendarEvents_sala_${roomId}`)) || [])
+        ];
+        calendar.removeAllEvents();
+        events.forEach(e => calendar.addEvent(e));
+    }
+
+    async function loadActivities() {
+        try {
+            const res = await fetch(API.ACTIVITATS);
+            const acts = await res.json();
+            activitiesByRoom.clear();
             
-            currentActiveButton = button;
-            currentActiveView = viewPanel;
+            acts.filter(a => a.activa).forEach(act => {
+                const roomId = String(act.id_sala);
+                if (!activitiesByRoom.has(roomId)) activitiesByRoom.set(roomId, []);
+                activitiesByRoom.get(roomId).push(formatEvent(act, roomColors.get(roomId)));
+            });
             
-            // Forçar un resize del calendari perquè es pinti bé (de vegades cal)
-            const cal = calendars.get(sala.id);
-            if (cal) {
-                setTimeout(() => cal.updateSize(), 50);
-            }
-        }
-    });
-
-    return button;
-}
-
-// Funció per carregar les sales des de l'API
-async function carregarSales() {
-    try {
-        const resposta = await fetch(API_SALAS_URL);
-        if (!resposta.ok) {
-            throw new Error(`Error HTTP: ${resposta.status}`);
-        }
-        const sales = await resposta.json();
-        
-        // Eliminar missatge de càrrega
-        if (loadingDiv) {
-            loadingDiv.remove();
-        }
-        
-        if (!sales || sales.length === 0) {
-            sidebar.innerHTML = '<div style="padding:20px;text-align:center;width:100%;">No hi ha sales disponibles</div>';
-            return;
-        }
-        
-        // Crear botons per a cada sala
-        sales.forEach(sala => {
-            const button = createSalaButton(sala);
-            sidebar.appendChild(button);
-        });
-        
-    } catch (error) {
-        console.error('Error carregant sales:', error);
-        if (loadingDiv) {
-            loadingDiv.innerHTML = `Error carregant les sales<br><small>${error.message}</small>`;
-            loadingDiv.style.color = 'red';
+            calendars.forEach((cal, roomId) => updateCalendarEvents(roomId, cal));
+        } catch (e) {
+            console.error('Error activitats:', e);
         }
     }
-}
 
-// Inicialització
-document.addEventListener('DOMContentLoaded', () => {
-    carregarSales();
-});
+    function createRoomPanel(room) {
+        const roomId = String(room.id_sala);
+        const panel = document.createElement('div');
+        panel.id = `view-sala-${roomId}`;
+        panel.className = 'view-panel';
+        
+        panel.innerHTML = `
+            <div class="calendar-panel" style="height:100%">
+                <div class="calendar-header">
+                    <h2>${room.nom}</h2>
+                    <div class="view-toggles">
+                        <button class="view-btn active-view" data-view="dayGridMonth">Mes</button>
+                        <button class="view-btn" data-view="timeGridWeek">Setmana</button>
+                        <button class="view-btn" data-view="timeGridDay">Dia</button>
+                    </div>
+                </div>
+                <div id="calendar-sala-${roomId}" style="flex:1; min-height:0"></div>
+            </div>
+        `;
+        dom.dynamicViews.appendChild(panel);
+        
+        const calendarEl = panel.querySelector(`#calendar-sala-${roomId}`);
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            locale: 'ca',
+            firstDay: 1,
+            height: '100%',
+            headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
+            buttonText: { today: 'Avui' },
+            eventClick: info => showModal(info.event)
+        });
+        calendar.render();
+        calendars.set(roomId, calendar);
+        
+        // Cambiar vista
+        panel.querySelectorAll('.view-btn').forEach(btn => {
+            btn.onclick = () => {
+                calendar.changeView(btn.dataset.view);
+                panel.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active-view'));
+                btn.classList.add('active-view');
+            };
+        });
+        
+        if (activitiesByRoom.size) updateCalendarEvents(roomId, calendar);
+        return panel;
+    }
 
-// Exposar goHome per si es necessita
-window.goHome = goHome;
+    function createRoomButton(room) {
+        const btn = document.createElement('button');
+        btn.className = 'sala-btn';
+        btn.textContent = room.nom;
+        btn.dataset.id = room.id_sala;
+        btn.style.backgroundColor = room.colorHex || '#3b82f6';
+        btn.style.color = '#fff';
+        btn.style.border = 'none';
+        btn.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+        btn.style.transition = 'all 0.2s ease'; // Añadir transición
+        
+        const panel = createRoomPanel(room);
+        
+        btn.onclick = () => {
+            if (btn.classList.contains('active')) return goHome();
+            
+            if (activeBtn) activeBtn.classList.remove('active');
+            if (activeView) activeView.classList.remove('active');
+            
+            btn.classList.add('active');
+            panel.classList.add('active');
+            dom.viewHome.classList.remove('active');
+            
+            activeBtn = btn;
+            activeView = panel;
+            dom.headerTitle.textContent = room.nom;
+            dom.roomBadge.textContent = room.nom;
+            
+            const cal = calendars.get(String(room.id_sala));
+            if (cal) setTimeout(() => cal.updateSize(), 50);
+        };
+        
+        return btn;
+    }
 
+    async function loadRooms() {
+        try {
+            const res = await fetch(API.SALAS);
+            const rooms = await res.json();
+            
+            document.getElementById('loading-sales')?.remove();
+            if (!rooms?.length) {
+                dom.sidebar.innerHTML = '<div style="padding:20px;text-align:center">No hi ha sales</div>';
+                return;
+            }
+            
+            rooms.forEach(r => { if (r.colorHex) roomColors.set(String(r.id_sala), r.colorHex); });
+            rooms.sort((a,b) => a.nom.localeCompare(b.nom));
+            rooms.forEach(r => dom.sidebar.appendChild(createRoomButton(r)));
+            
+            await loadActivities();
+            calendars.forEach((cal, roomId) => updateCalendarEvents(roomId, cal));
+        } catch (e) {
+            console.error('Error sales:', e);
+            const loading = document.getElementById('loading-sales');
+            if (loading) loading.innerHTML = `Error: ${e.message}`;
+        }
+    }
+
+    // Inicio
+    document.addEventListener('DOMContentLoaded', () => {
+        const savedColor = localStorage.getItem('pref_color');
+        if (savedColor) document.documentElement.style.setProperty('--color-primary', savedColor);
+        const savedName = localStorage.getItem('pref_nom');
+        if (savedName) dom.headerTitle.textContent = savedName;
+        loadRooms();
+    });
+})();
