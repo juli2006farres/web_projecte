@@ -276,20 +276,7 @@ aside {
     font-size: 0.9rem;
 }
 
-/* Responsive */
-@media (max-width: 900px) {
-    main {
-        flex-direction: column;
-    }
-    aside {
-        width: 100%;
-        flex-direction: row;
-        flex-wrap: wrap;
-    }
-    .sala-btn {
-        flex: 1 0 auto;
-    }
-}
+
 
 #dynamic-views {
     width: 100%;

@@ -1,5 +1,9 @@
+const API_BASE = 'http://localhost:8085';
+
 (function() {
     "use strict";
+
+    
 
     // Esperem que el DOM estigui carregat
     document.addEventListener('DOMContentLoaded', function() {
@@ -101,7 +105,8 @@ async function loadDashboardStats() {
 
     // 1. Total d'usuaris
     try {
-        const resposta = await fetch('https://34.230.76.192/api/usuaris/usuaris');
+        console.log('Valor de API_BASE:', API_BASE);
+        const resposta = await fetch(`${API_BASE}/usuaris/usuaris`);
         const usuaris = await resposta.json();
         usersEl.textContent = usuaris.length;
     } catch (error) {
@@ -110,7 +115,7 @@ async function loadDashboardStats() {
 
     // 2. Total d'activitats
     try {
-        const resposta = await fetch('https://34.230.76.192/api/activitats/activitats');
+        const resposta = await fetch(`${API_BASE}/activitats/activitats`);
         const activitats = await resposta.json();
         
         let comptadorActives = 0;
@@ -126,7 +131,7 @@ async function loadDashboardStats() {
 
     // 3. Total de sales
     try {
-        const resposta = await fetch('https://34.230.76.192/api/sala/salas');
+        const resposta = await fetch(`${API_BASE}/sala/salas`);
         const sales = await resposta.json();
         roomsEl.textContent = sales.length;
     } catch (error) {
@@ -153,7 +158,7 @@ async function loadRecentActivity() {
     const recentListEl = document.getElementById('recent-list');
 
     try {
-        const resposta = await fetch('https://34.230.76.192/api/activitats/activitats');
+        const resposta = await fetch(`${API_BASE}/activitats/activitats`);
         const activitats = await resposta.json();
 
         // Ordenar per data descendent (més recents primer)
@@ -229,7 +234,7 @@ async function loadUsersTable() {
     tbody.innerHTML = '<tr><td colspan="5">Carregant usuaris...</td></tr>';
 
     try {
-        const resposta = await fetch('https://34.230.76.192/api/usuaris/usuaris');
+        const resposta = await fetch(`${API_BASE}/usuaris/usuaris`);
         const usuaris = await resposta.json();
 
         // Netejar taula
@@ -267,6 +272,25 @@ async function loadUsersTable() {
 
             // Accions
             const tdAccions = document.createElement('td');
+            tdAccions.style.display = 'flex';
+            tdAccions.style.gap = '8px';
+            tdAccions.style.justifyContent = 'center';
+
+            // Botó Editar
+            const btnEditar = document.createElement('button');
+            btnEditar.textContent = 'Editar';
+            btnEditar.style.backgroundColor = '#f59e0b';
+            btnEditar.style.color = 'white';
+            btnEditar.style.border = 'none';
+            btnEditar.style.padding = '6px 14px';
+            btnEditar.style.borderRadius = '30px';
+            btnEditar.style.cursor = 'pointer';
+            btnEditar.style.fontWeight = '500';
+            btnEditar.addEventListener('click', function() {
+                editarUsuari(u);
+            });
+
+            // Botó Esborrar
             const btnEsborrar = document.createElement('button');
             btnEsborrar.textContent = 'Esborrar';
             btnEsborrar.style.backgroundColor = '#dc2626';
@@ -276,34 +300,11 @@ async function loadUsersTable() {
             btnEsborrar.style.borderRadius = '30px';
             btnEsborrar.style.cursor = 'pointer';
             btnEsborrar.style.fontWeight = '500';
-            btnEsborrar.style.fontSize = '0.9rem';
-            btnEsborrar.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
-            btnEsborrar.style.transition = 'all 0.15s';
-
-            // Funció esborrar
-            btnEsborrar.addEventListener('click', async function() {
-                if (!confirm('Segur que vols esborrar aquest usuari?')) return;
-
-                const idUsuari = u.id_usuari || u.id;
-                try {
-                    const respostaDelete = await fetch(`https://34.230.76.192/api/usuaris/usuaris/${idUsuari}`, {
-                        method: 'DELETE'
-                    });
-
-                    if (respostaDelete.ok) {
-                        // Recarregar taula
-                        loadUsersTable();
-                        // Actualitzar estadístiques
-                        loadDashboardStats();
-                    } else {
-                        alert('Error en esborrar l\'usuari.');
-                    }
-                } catch (error) {
-                    console.warn('Error esborrant usuari:', error);
-                    alert('Error de connexió.');
-                }
+            btnEsborrar.addEventListener('click', function() {
+                confirmarEsborrarUsuari(u);
             });
 
+            tdAccions.appendChild(btnEditar);
             tdAccions.appendChild(btnEsborrar);
             fila.appendChild(tdAccions);
 
@@ -349,7 +350,7 @@ async function loadActivitiesTable() {
     tbody.innerHTML = '<tr><td colspan="7">Carregant activitats...</td></tr>';
 
     try {
-        const resposta = await fetch('https://34.230.76.192/api/activitats/activitats');
+        const resposta = await fetch(`${API_BASE}/activitats/activitats`);
         const activitats = await resposta.json();
 
         tbody.innerHTML = '';
@@ -399,20 +400,6 @@ async function loadActivitiesTable() {
             tdAccions.style.display = 'flex';
             tdAccions.style.gap = '8px';
 
-            // Botó Editar (individual)
-            const btnEditar = document.createElement('button');
-            btnEditar.textContent = 'Editar';
-            btnEditar.style.backgroundColor = '#f59e0b';
-            btnEditar.style.color = 'white';
-            btnEditar.style.border = 'none';
-            btnEditar.style.padding = '6px 14px';
-            btnEditar.style.borderRadius = '30px';
-            btnEditar.style.cursor = 'pointer';
-            btnEditar.style.fontWeight = '500';
-            btnEditar.addEventListener('click', function() {
-                editarActivitat(act.id_activitat);
-            });
-
             // Botó Esborrar
             const btnEsborrar = document.createElement('button');
             btnEsborrar.textContent = 'Esborrar';
@@ -423,26 +410,10 @@ async function loadActivitiesTable() {
             btnEsborrar.style.borderRadius = '30px';
             btnEsborrar.style.cursor = 'pointer';
             btnEsborrar.style.fontWeight = '500';
-            btnEsborrar.addEventListener('click', async function() {
-                if (!confirm('Segur que vols esborrar aquesta activitat?')) return;
-                try {
-                    const res = await fetch(`https://34.230.76.192/api/activitats/activitats/${act.id_activitat}`, {
-                        method: 'DELETE'
-                    });
-                    if (res.ok) {
-                        loadActivitiesTable();
-                        loadDashboardStats(); // actualitza comptador
-                        loadRecentActivity();  // actualitza llista recent
-                    } else {
-                        alert('Error en esborrar.');
-                    }
-                } catch (error) {
-                    console.warn(error);
-                    alert('Error de connexió.');
-                }
+            btnEsborrar.addEventListener('click', function() {
+                confirmarEsborrarActivitat(act);
             });
 
-            tdAccions.appendChild(btnEditar);
             tdAccions.appendChild(btnEsborrar);
             fila.appendChild(tdAccions);
 
@@ -465,9 +436,765 @@ function editarActivitat(id) {
 loadActivitiesTable();
 document.querySelector('.admin-nav-btn[data-view="activities"]').addEventListener('click', loadActivitiesTable);
 
-// Botó "Nova Activitat" (per ara només missatge)
+// Botó "Nova Activitat" → obre el modal de creació
 document.getElementById('btn-nova-activitat').addEventListener('click', function() {
-    alert('Obrir formulari per crear nova activitat.');
+    showNovaActivitatModal();
 });
 
+// ---------- MODAL NOVA ACTIVITAT ----------
+async function showNovaActivitatModal() {
+    // Carreguem sales i usuaris en paral·lel per omplir els selects
+    let sales = [];
+    let usuaris = [];
+    try {
+        const [resSales, resUsuaris] = await Promise.all([
+            fetch(`${API_BASE}/sala/salas`),
+            fetch(`${API_BASE}/usuaris/usuaris`)
+        ]);
+        sales = await resSales.json();
+        usuaris = await resUsuaris.json();
+    } catch (error) {
+        console.error('Error carregant sales/usuaris:', error);
+        alert('No s\'han pogut carregar les sales o usuaris.');
+        return;
+    }
 
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+
+    // Construïm les opcions dels selects
+    const salesOptions = sales.map(s =>
+        `<option value="${s.id_sala}">${s.nom}</option>`
+    ).join('');
+
+    const usuarisOptions = usuaris.map(u => {
+        const id = u.id_usuari || u.id;
+        const nom = u.nom || u.correu || u.email || ('Usuari ' + id);
+        return `<option value="${id}">${nom}</option>`;
+    }).join('');
+
+    overlay.innerHTML = `
+        <div class="modal-card">
+            <button class="modal-close-icon" aria-label="Tancar">✕</button>
+            <div class="modal-title">Nova Activitat</div>
+
+            <div class="modal-form">
+                <label>
+                    Títol
+                    <input type="text" id="nova-act-titol" placeholder="Ex: Reunió equip" required>
+                </label>
+
+                <label>
+                    Descripció
+                    <textarea id="nova-act-descripcio" placeholder="Descripció de l'activitat" required></textarea>
+                </label>
+
+                <div class="form-row">
+                    <label>
+                        Sala
+                        <select id="nova-act-sala">${salesOptions}</select>
+                    </label>
+
+                    <label>
+                        Usuari
+                        <select id="nova-act-usuari">${usuarisOptions}</select>
+                    </label>
+                </div>
+
+                <div class="form-row">
+                    <label>
+                        Data
+                        <input type="date" id="nova-act-data" required>
+                    </label>
+
+                    <label>
+                        Hora inici
+                        <input type="time" id="nova-act-hora-inici" required>
+                    </label>
+
+                    <label>
+                        Hora fi
+                        <input type="time" id="nova-act-hora-fi" required>
+                    </label>
+                </div>
+                <button class="modal-close-btn" id="nova-act-guardar">Crear activitat</button>
+            </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    const close = () => overlay.remove();
+    overlay.querySelector('.modal-close-icon').onclick = close;
+    overlay.onclick = e => { if (e.target === overlay) close(); };
+
+    // Acció guardar
+    overlay.querySelector('#nova-act-guardar').onclick = async function() {
+        const titol = document.getElementById('nova-act-titol').value.trim();
+        const descripcio = document.getElementById('nova-act-descripcio').value.trim();
+        const id_sala = document.getElementById('nova-act-sala').value;
+        const id_usuari = document.getElementById('nova-act-usuari').value;
+        const data = document.getElementById('nova-act-data').value;
+        const horaInici = document.getElementById('nova-act-hora-inici').value;
+        const horaFi = document.getElementById('nova-act-hora-fi').value;
+
+        // Validacions bàsiques
+        if (!titol) { alert('El títol és obligatori.'); return; }
+        if (!descripcio) { alert('La descripció és obligatòria.'); return; }
+        if (!id_sala) { alert('Has de seleccionar una sala.'); return; }
+        if (!id_usuari) { alert('Has de seleccionar un usuari.'); return; }
+        if (!data) { alert('La data és obligatòria.'); return; }
+        if (!horaInici || !horaFi) { alert('Les hores són obligatòries.'); return; }
+        if (horaFi <= horaInici) { alert('L\'hora final ha de ser posterior a l\'hora d\'inici.'); return; }
+
+        const novaActivitat = {
+            id_sala: Number(id_sala),
+            id_usuari: Number(id_usuari),
+            titol: titol,
+            descripcio: descripcio,
+            data: data,           // format YYYY-MM-DD (input date ja el dóna així)
+            horaInici: horaInici, // format HH:mm (input time ja el dóna així)
+            horaFi: horaFi
+        };
+
+        try {
+            const res = await fetch(`${API_BASE}/activitats/activitat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(novaActivitat)
+            });
+
+            if (res.ok) {
+                close();
+                loadActivitiesTable();
+                loadDashboardStats();
+                loadRecentActivity();
+            } else {
+                const errorText = await res.text();
+                console.error('Error backend:', res.status, errorText);
+                alert('Error ' + res.status + ': ' + errorText);
+            }
+        } catch (error) {
+            console.error('Error creant activitat:', error);
+            alert('Error de connexió: ' + error.message);
+        }
+    };
+}
+
+
+
+
+
+
+
+// ---------- CARREGAR TAULA DE SALES ----------
+async function loadRoomsTable() {
+    const tbody = document.getElementById('rooms-table-body');
+    tbody.innerHTML = '<tr><td colspan="4">Carregant sales...</td></tr>';
+
+    try {
+        const resposta = await fetch(`${API_BASE}/sala/salas`);
+        const sales = await resposta.json();
+
+        tbody.innerHTML = '';
+
+        if (sales.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4">No hi ha sales.</td></tr>';
+            return;
+        }
+
+        for (let i = 0; i < sales.length; i++) {
+            const s = sales[i];
+            const fila = document.createElement('tr');
+
+            // ID
+            const tdId = document.createElement('td');
+            tdId.textContent = s.id_sala;
+            fila.appendChild(tdId);
+
+            // Nom
+            const tdNom = document.createElement('td');
+            tdNom.textContent = s.nom || '';
+            fila.appendChild(tdNom);
+
+            // Color (mostrem un quadradet de color + el codi hex)
+            const tdColor = document.createElement('td');
+            const colorWrapper = document.createElement('div');
+            colorWrapper.style.display = 'inline-flex';
+            colorWrapper.style.alignItems = 'center';
+            colorWrapper.style.gap = '10px';
+
+            const colorBox = document.createElement('span');
+            colorBox.style.display = 'inline-block';
+            colorBox.style.width = '20px';
+            colorBox.style.height = '20px';
+            colorBox.style.borderRadius = '6px';
+            colorBox.style.backgroundColor = s.colorHex || '#cbd5e1';
+            colorBox.style.border = '1px solid #e2e8f0';
+
+            const colorText = document.createElement('span');
+            colorText.textContent = s.colorHex || '—';
+
+            colorWrapper.appendChild(colorBox);
+            colorWrapper.appendChild(colorText);
+            tdColor.appendChild(colorWrapper);
+            fila.appendChild(tdColor);
+
+            // Accions
+            const tdAccions = document.createElement('td');
+            tdAccions.style.display = 'flex';
+            tdAccions.style.gap = '8px';
+            tdAccions.style.justifyContent = 'center';
+
+            // Botó Editar
+            const btnEditar = document.createElement('button');
+            btnEditar.textContent = 'Editar';
+            btnEditar.style.backgroundColor = '#f59e0b';
+            btnEditar.style.color = 'white';
+            btnEditar.style.border = 'none';
+            btnEditar.style.padding = '6px 14px';
+            btnEditar.style.borderRadius = '30px';
+            btnEditar.style.cursor = 'pointer';
+            btnEditar.style.fontWeight = '500';
+            btnEditar.addEventListener('click', function() {
+                editarSala(s.id_sala);
+            });
+
+            // Botó Esborrar
+            const btnEsborrar = document.createElement('button');
+            btnEsborrar.textContent = 'Esborrar';
+            btnEsborrar.style.backgroundColor = '#dc2626';
+            btnEsborrar.style.color = 'white';
+            btnEsborrar.style.border = 'none';
+            btnEsborrar.style.padding = '6px 14px';
+            btnEsborrar.style.borderRadius = '30px';
+            btnEsborrar.style.cursor = 'pointer';
+            btnEsborrar.style.fontWeight = '500';
+            btnEsborrar.addEventListener('click', function() {
+                confirmarEsborrarSala(s);
+            });
+
+            tdAccions.appendChild(btnEditar);
+            tdAccions.appendChild(btnEsborrar);
+            fila.appendChild(tdAccions);
+
+            tbody.appendChild(fila);
+        }
+
+    } catch (error) {
+        console.warn('Error carregant sales:', error);
+        tbody.innerHTML = '<tr><td colspan="4">Error en carregar sales.</td></tr>';
+    }
+}
+
+// ---------- MODAL EDITAR SALA ----------
+async function editarSala(id) {
+    // Primer carreguem les dades de la sala (de la llista, ja que no hi ha endpoint /sala/{id})
+    let sala = null;
+    try {
+        const res = await fetch(`${API_BASE}/sala/salas`);
+        const sales = await res.json();
+        sala = sales.find(s => s.id_sala === id);
+    } catch (error) {
+        console.error('Error carregant sala:', error);
+        alert('No s\'han pogut carregar les dades de la sala.');
+        return;
+    }
+
+    if (!sala) {
+        alert('Sala no trobada.');
+        return;
+    }
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+
+    // Generem les opcions del select marcant la ubicació actual
+    const ubicacions = ['P0', 'P4', 'P5'];
+    const ubicacioOptions = ubicacions.map(u => {
+        const selected = u === sala.ubicacio ? 'selected' : '';
+        const label = u === 'P0' ? 'P0 — Planta baixa'
+                    : u === 'P4' ? 'P4 — Planta 4'
+                    : 'P5 — Planta 5';
+        return `<option value="${u}" ${selected}>${label}</option>`;
+    }).join('');
+
+    overlay.innerHTML = `
+        <div class="modal-card">
+            <button class="modal-close-icon" aria-label="Tancar">✕</button>
+            <div class="modal-title">Editar Sala</div>
+
+            <div class="modal-form">
+                <label>
+                    Nom
+                    <input type="text" id="edit-sala-nom" value="${sala.nom || ''}" required>
+                </label>
+
+                <label>
+                    Ubicació
+                    <select id="edit-sala-ubicacio">${ubicacioOptions}</select>
+                </label>
+
+                <label>
+                    Descripció
+                    <textarea id="edit-sala-descripcio">${sala.descripcio || ''}</textarea>
+                </label>
+            </div>
+
+            <button class="modal-close-btn" id="edit-sala-guardar">Guardar canvis</button>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    const close = () => overlay.remove();
+    overlay.querySelector('.modal-close-icon').onclick = close;
+    overlay.onclick = e => { if (e.target === overlay) close(); };
+
+    // Acció guardar
+    overlay.querySelector('#edit-sala-guardar').onclick = async function() {
+        const nom = document.getElementById('edit-sala-nom').value.trim();
+        const ubicacio = document.getElementById('edit-sala-ubicacio').value;
+        const descripcio = document.getElementById('edit-sala-descripcio').value.trim();
+
+        if (!nom) {
+            alert('El nom és obligatori.');
+            return;
+        }
+
+        const salaActualitzada = {
+            nom: nom,
+            ubicacio: ubicacio,
+            descripcio: descripcio
+        };
+
+        try {
+            const res = await fetch(`${API_BASE}/sala/salas/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(salaActualitzada)
+            });
+
+            if (res.ok) {
+                close();
+                loadRoomsTable();
+            } else {
+                const errorText = await res.text();
+                console.error('Error backend:', res.status, errorText);
+                alert('Error ' + res.status + ': ' + errorText);
+            }
+        } catch (error) {
+            console.error('Error editant sala:', error);
+            alert('Error de connexió: ' + error.message);
+        }
+    };
+}
+
+// Carregar la taula en iniciar i quan es faci clic a la pestanya
+loadRoomsTable();
+document.querySelector('.admin-nav-btn[data-view="rooms"]').addEventListener('click', loadRoomsTable);
+
+// Botó "Nova Sala" (per ara només missatge)
+// Botó "Nova Sala" → obre el modal de creació
+document.getElementById('btn-nova-sala').addEventListener('click', function() {
+    showNovaSalaModal();
+});
+
+// ---------- MODAL NOVA SALA ----------
+function showNovaSalaModal() {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+
+    overlay.innerHTML = `
+        <div class="modal-card">
+            <button class="modal-close-icon" aria-label="Tancar">✕</button>
+            <div class="modal-title">Nova Sala</div>
+
+            <div class="modal-form">
+                <label>
+                    Nom
+                    <input type="text" id="nova-sala-nom" placeholder="Ex: Sala3" required>
+                </label>
+
+                <label>
+                    Ubicació
+                    <select id="nova-sala-ubicacio">
+                        <option value="P0">P0 — Planta baixa</option>
+                        <option value="P4">P4 — Planta 4</option>
+                        <option value="P5">P5 — Planta 5</option>
+                    </select>
+                </label>
+
+                <label>
+                    Descripció
+                    <textarea id="nova-sala-descripcio" placeholder="Descripció breu de la sala"></textarea>
+                </label>
+            </div>
+
+            <button class="modal-close-btn" id="nova-sala-guardar">Crear sala</button>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    const close = () => overlay.remove();
+    overlay.querySelector('.modal-close-icon').onclick = close;
+    overlay.onclick = e => { if (e.target === overlay) close(); };
+
+    // Acció guardar
+    overlay.querySelector('#nova-sala-guardar').onclick = async function() {
+        const nom = document.getElementById('nova-sala-nom').value.trim();
+        const ubicacio = document.getElementById('nova-sala-ubicacio').value;
+        const descripcio = document.getElementById('nova-sala-descripcio').value.trim();
+
+        if (!nom) {
+            alert('El nom és obligatori.');
+            return;
+        }
+
+        const novaSala = {
+            nom: nom,
+            ubicacio: ubicacio,
+            descripcio: descripcio
+        };
+
+        try {
+            const res = await fetch(`${API_BASE}/sala/salas`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(novaSala)
+            });
+
+            if (res.ok) {
+                close();
+                loadRoomsTable();
+                loadDashboardStats();
+            } else {
+                const errorText = await res.text();
+                console.error('Error backend:', res.status, errorText);
+                alert('Error ' + res.status + ': ' + errorText);
+            }
+        } catch (error) {
+            console.error('Error creant sala:', error);
+            alert('Error de connexió: ' + error.message);
+        }
+    };
+}
+
+
+
+// ---------- MODAL CONFIRMAR ESBORRAR SALA ----------
+function confirmarEsborrarSala(sala) {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+
+    overlay.innerHTML = `
+        <div class="modal-card modal-card-small">
+            <button class="modal-close-icon" aria-label="Tancar">✕</button>
+
+            <div class="modal-icon-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+
+            <div class="modal-title modal-title-center">Esborrar sala</div>
+
+            <p class="modal-text">
+                Segur que vols esborrar la sala <strong>${sala.nom}</strong>?<br>
+                Aquesta acció no es pot desfer.
+            </p>
+
+            <div class="modal-actions">
+                <button class="modal-btn-secondary" id="cancel-esborrar">Cancel·lar</button>
+                <button class="modal-btn-danger" id="confirm-esborrar">Sí, esborrar</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    const close = () => overlay.remove();
+    overlay.querySelector('.modal-close-icon').onclick = close;
+    overlay.querySelector('#cancel-esborrar').onclick = close;
+    overlay.onclick = e => { if (e.target === overlay) close(); };
+
+    overlay.querySelector('#confirm-esborrar').onclick = async function() {
+        try {
+            const res = await fetch(`${API_BASE}/sala/salas/${sala.id_sala}`, {
+                method: 'DELETE'
+            });
+
+            if (res.ok) {
+                close();
+                loadRoomsTable();
+                loadDashboardStats();
+            } else {
+                const errorText = await res.text();
+                console.error('Error backend:', res.status, errorText);
+                alert('Error ' + res.status + ': ' + errorText);
+            }
+        } catch (error) {
+            console.error('Error esborrant sala:', error);
+            alert('Error de connexió: ' + error.message);
+        }
+    };
+}
+
+
+// ---------- MODAL CONFIRMAR ESBORRAR ACTIVITAT ----------
+function confirmarEsborrarActivitat(act) {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+
+    overlay.innerHTML = `
+        <div class="modal-card modal-card-small">
+            <button class="modal-close-icon" aria-label="Tancar">✕</button>
+
+            <div class="modal-icon-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+
+            <div class="modal-title modal-title-center">Esborrar activitat</div>
+
+            <p class="modal-text">
+                Segur que vols esborrar l'activitat <strong>${act.titol}</strong>?<br>
+                Aquesta acció no es pot desfer.
+            </p>
+
+            <div class="modal-actions">
+                <button class="modal-btn-secondary" id="cancel-esborrar-act">Cancel·lar</button>
+                <button class="modal-btn-danger" id="confirm-esborrar-act">Sí, esborrar</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    const close = () => overlay.remove();
+    overlay.querySelector('.modal-close-icon').onclick = close;
+    overlay.querySelector('#cancel-esborrar-act').onclick = close;
+    overlay.onclick = e => { if (e.target === overlay) close(); };
+
+    overlay.querySelector('#confirm-esborrar-act').onclick = async function() {
+        try {
+            const res = await fetch(`${API_BASE}/activitats/activitat/${act.id_activitat}`, {
+                method: 'DELETE'
+            });
+
+            if (res.ok) {
+                close();
+                loadActivitiesTable();
+                loadDashboardStats();
+                loadRecentActivity();
+            } else {
+                const errorText = await res.text();
+                console.error('Error backend:', res.status, errorText);
+                alert('Error ' + res.status + ': ' + errorText);
+            }
+        } catch (error) {
+            console.error('Error esborrant activitat:', error);
+            alert('Error de connexió: ' + error.message);
+        }
+    };
+}
+
+
+
+// ---------- BOTÓ NOU USUARI ----------
+document.getElementById('btn-nou-usuari').addEventListener('click', function() {
+    showNouUsuariModal();
+});
+
+// ---------- MODAL NOU USUARI ----------
+function showNouUsuariModal() {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+
+    overlay.innerHTML = `
+        <div class="modal-card">
+            <button class="modal-close-icon" aria-label="Tancar">✕</button>
+            <div class="modal-title">Nou Usuari</div>
+
+            <div class="modal-form">
+                <label>
+                    Nom
+                    <input type="text" id="nou-user-nom" placeholder="Ex: Joan Pérez" required>
+                </label>
+
+                <label>
+                    Email
+                    <input type="text" id="nou-user-email" placeholder="exemple@iticbcn.cat" required>
+                </label>
+            </div>
+
+            <button class="modal-close-btn" id="nou-user-guardar">Crear usuari</button>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    const close = () => overlay.remove();
+    overlay.querySelector('.modal-close-icon').onclick = close;
+    overlay.onclick = e => { if (e.target === overlay) close(); };
+
+    overlay.querySelector('#nou-user-guardar').onclick = async function() {
+        const nom = document.getElementById('nou-user-nom').value.trim();
+        const email = document.getElementById('nou-user-email').value.trim();
+
+        if (!nom) { alert('El nom és obligatori.'); return; }
+        if (!email) { alert('L\'email és obligatori.'); return; }
+        if (!email.includes('@')) { alert('L\'email no és vàlid.'); return; }
+
+        const nouUsuari = {
+            nom: nom,
+            email: email,
+            provider: 'manual',
+            providerId: null,
+            fotoPerfil: null
+        };
+
+        try {
+            const res = await fetch(`${API_BASE}/usuaris/usuaris`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(nouUsuari)
+            });
+
+            if (res.ok) {
+                close();
+                loadUsersTable();
+                loadDashboardStats();
+            } else {
+                const errorText = await res.text();
+                console.error('Error backend:', res.status, errorText);
+                alert('Error ' + res.status + ': ' + errorText);
+            }
+        } catch (error) {
+            console.error('Error creant usuari:', error);
+            alert('Error de connexió: ' + error.message);
+        }
+    };
+}
+
+// ---------- MODAL EDITAR USUARI ----------
+function editarUsuari(usuari) {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+
+    overlay.innerHTML = `
+        <div class="modal-card">
+            <button class="modal-close-icon" aria-label="Tancar">✕</button>
+            <div class="modal-title">Editar Usuari</div>
+
+            <div class="modal-form">
+                <label>
+                    Nom
+                    <input type="text" id="edit-user-nom" value="${usuari.nom || ''}" required>
+                </label>
+
+                <label>
+                    Email
+                    <input type="text" id="edit-user-email" value="${usuari.email || ''}" required>
+                </label>
+            </div>
+
+            <button class="modal-close-btn" id="edit-user-guardar">Guardar canvis</button>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    const close = () => overlay.remove();
+    overlay.querySelector('.modal-close-icon').onclick = close;
+    overlay.onclick = e => { if (e.target === overlay) close(); };
+
+    overlay.querySelector('#edit-user-guardar').onclick = async function() {
+        const nom = document.getElementById('edit-user-nom').value.trim();
+        const email = document.getElementById('edit-user-email').value.trim();
+
+        if (!nom) { alert('El nom és obligatori.'); return; }
+        if (!email) { alert('L\'email és obligatori.'); return; }
+        if (!email.includes('@')) { alert('L\'email no és vàlid.'); return; }
+
+        const usuariActualitzat = {
+            nom: nom,
+            email: email
+            // provider, providerId i fotoPerfil els deixem null perquè
+            // l'API mantingui els valors existents
+        };
+
+        try {
+            const res = await fetch(`${API_BASE}/usuaris/usuaris/${usuari.id_usuari}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(usuariActualitzat)
+            });
+
+            if (res.ok) {
+                close();
+                loadUsersTable();
+            } else {
+                const errorText = await res.text();
+                console.error('Error backend:', res.status, errorText);
+                alert('Error ' + res.status + ': ' + errorText);
+            }
+        } catch (error) {
+            console.error('Error editant usuari:', error);
+            alert('Error de connexió: ' + error.message);
+        }
+    };
+}
+
+// ---------- MODAL CONFIRMAR ESBORRAR USUARI ----------
+function confirmarEsborrarUsuari(usuari) {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+
+    overlay.innerHTML = `
+        <div class="modal-card modal-card-small">
+            <button class="modal-close-icon" aria-label="Tancar">✕</button>
+
+            <div class="modal-icon-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+
+            <div class="modal-title modal-title-center">Esborrar usuari</div>
+
+            <p class="modal-text">
+                Segur que vols esborrar l'usuari <strong>${usuari.nom || usuari.email}</strong>?<br>
+                Aquesta acció no es pot desfer.
+            </p>
+
+            <div class="modal-actions">
+                <button class="modal-btn-secondary" id="cancel-esborrar-user">Cancel·lar</button>
+                <button class="modal-btn-danger" id="confirm-esborrar-user">Sí, esborrar</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    const close = () => overlay.remove();
+    overlay.querySelector('.modal-close-icon').onclick = close;
+    overlay.querySelector('#cancel-esborrar-user').onclick = close;
+    overlay.onclick = e => { if (e.target === overlay) close(); };
+
+    overlay.querySelector('#confirm-esborrar-user').onclick = async function() {
+        try {
+            const res = await fetch(`${API_BASE}/usuaris/usuaris/${usuari.id_usuari}`, {
+                method: 'DELETE'
+            });
+
+            if (res.ok) {
+                close();
+                loadUsersTable();
+                loadDashboardStats();
+            } else {
+                const errorText = await res.text();
+                console.error('Error backend:', res.status, errorText);
+                alert('Error ' + res.status + ': ' + errorText);
+            }
+        } catch (error) {
+            console.error('Error esborrant usuari:', error);
+            alert('Error de connexió: ' + error.message);
+        }
+    };
+}

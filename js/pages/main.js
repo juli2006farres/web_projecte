@@ -3,8 +3,8 @@
 
     // Configuración
     const API = {
-        SALAS: 'https://34.230.76.192/api/sala/salas',
-        ACTIVITATS: 'https://34.230.76.192/api/activitats/activitats'
+        SALAS: 'http://localhost:8085/sala/salas',
+        ACTIVITATS: 'http://localhost:8085/activitats/activitats'
     };
 
     // DOM elements
