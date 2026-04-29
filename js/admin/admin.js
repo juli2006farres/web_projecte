@@ -106,7 +106,7 @@ async function loadDashboardStats() {
     // 1. Total d'usuaris
     try {
         console.log('Valor de API_BASE:', API_BASE);
-        const resposta = await fetch(`${API_BASE}/usuaris/usuaris`);
+        const resposta = await fetch(`${API_BASE}/usuaris`);
         const usuaris = await resposta.json();
         usersEl.textContent = usuaris.length;
     } catch (error) {
@@ -115,7 +115,7 @@ async function loadDashboardStats() {
 
     // 2. Total d'activitats
     try {
-        const resposta = await fetch(`${API_BASE}/activitats/activitats`);
+        const resposta = await fetch(`${API_BASE}/activitats`);
         const activitats = await resposta.json();
         
         let comptadorActives = 0;
@@ -131,7 +131,7 @@ async function loadDashboardStats() {
 
     // 3. Total de sales
     try {
-        const resposta = await fetch(`${API_BASE}/sala/salas`);
+        const resposta = await fetch(`${API_BASE}/salas`);
         const sales = await resposta.json();
         roomsEl.textContent = sales.length;
     } catch (error) {
@@ -158,7 +158,7 @@ async function loadRecentActivity() {
     const recentListEl = document.getElementById('recent-list');
 
     try {
-        const resposta = await fetch(`${API_BASE}/activitats/activitats`);
+        const resposta = await fetch(`${API_BASE}/activitats`);
         const activitats = await resposta.json();
 
         // Ordenar per data descendent (més recents primer)
@@ -234,7 +234,7 @@ async function loadUsersTable() {
     tbody.innerHTML = '<tr><td colspan="5">Carregant usuaris...</td></tr>';
 
     try {
-        const resposta = await fetch(`${API_BASE}/usuaris/usuaris`);
+        const resposta = await fetch(`${API_BASE}/usuaris`);
         const usuaris = await resposta.json();
 
         // Netejar taula
@@ -350,7 +350,7 @@ async function loadActivitiesTable() {
     tbody.innerHTML = '<tr><td colspan="7">Carregant activitats...</td></tr>';
 
     try {
-        const resposta = await fetch(`${API_BASE}/activitats/activitats`);
+        const resposta = await fetch(`${API_BASE}/activitats`);
         const activitats = await resposta.json();
 
         tbody.innerHTML = '';
@@ -448,8 +448,8 @@ async function showNovaActivitatModal() {
     let usuaris = [];
     try {
         const [resSales, resUsuaris] = await Promise.all([
-            fetch(`${API_BASE}/sala/salas`),
-            fetch(`${API_BASE}/usuaris/usuaris`)
+            fetch(`${API_BASE}/salas`),
+            fetch(`${API_BASE}/usuaris`)
         ]);
         sales = await resSales.json();
         usuaris = await resUsuaris.json();
@@ -557,7 +557,7 @@ async function showNovaActivitatModal() {
         };
 
         try {
-            const res = await fetch(`${API_BASE}/activitats/activitat`, {
+            const res = await fetch(`${API_BASE}/activitat`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(novaActivitat)
@@ -592,7 +592,7 @@ async function loadRoomsTable() {
     tbody.innerHTML = '<tr><td colspan="4">Carregant sales...</td></tr>';
 
     try {
-        const resposta = await fetch(`${API_BASE}/sala/salas`);
+        const resposta = await fetch(`${API_BASE}/salas`);
         const sales = await resposta.json();
 
         tbody.innerHTML = '';
@@ -691,7 +691,7 @@ async function editarSala(id) {
     // Primer carreguem les dades de la sala (de la llista, ja que no hi ha endpoint /sala/{id})
     let sala = null;
     try {
-        const res = await fetch(`${API_BASE}/sala/salas`);
+        const res = await fetch(`${API_BASE}/salas`);
         const sales = await res.json();
         sala = sales.find(s => s.id_sala === id);
     } catch (error) {
@@ -768,7 +768,7 @@ async function editarSala(id) {
         };
 
         try {
-            const res = await fetch(`${API_BASE}/sala/salas/${id}`, {
+            const res = await fetch(`${API_BASE}/salas/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(salaActualitzada)
@@ -858,7 +858,7 @@ function showNovaSalaModal() {
         };
 
         try {
-            const res = await fetch(`${API_BASE}/sala/salas`, {
+            const res = await fetch(`${API_BASE}/salas`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(novaSala)
@@ -918,7 +918,7 @@ function confirmarEsborrarSala(sala) {
 
     overlay.querySelector('#confirm-esborrar').onclick = async function() {
         try {
-            const res = await fetch(`${API_BASE}/sala/salas/${sala.id_sala}`, {
+            const res = await fetch(`${API_BASE}/salas/${sala.id_sala}`, {
                 method: 'DELETE'
             });
 
@@ -975,7 +975,7 @@ function confirmarEsborrarActivitat(act) {
 
     overlay.querySelector('#confirm-esborrar-act').onclick = async function() {
         try {
-            const res = await fetch(`${API_BASE}/activitats/activitat/${act.id_activitat}`, {
+            const res = await fetch(`${API_BASE}/activitat/${act.id_activitat}`, {
                 method: 'DELETE'
             });
 
@@ -1052,7 +1052,7 @@ function showNouUsuariModal() {
         };
 
         try {
-            const res = await fetch(`${API_BASE}/usuaris/usuaris`, {
+            const res = await fetch(`${API_BASE}/usuaris`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(nouUsuari)
@@ -1122,7 +1122,7 @@ function editarUsuari(usuari) {
         };
 
         try {
-            const res = await fetch(`${API_BASE}/usuaris/usuaris/${usuari.id_usuari}`, {
+            const res = await fetch(`${API_BASE}/usuaris/${usuari.id_usuari}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(usuariActualitzat)
@@ -1179,7 +1179,7 @@ function confirmarEsborrarUsuari(usuari) {
 
     overlay.querySelector('#confirm-esborrar-user').onclick = async function() {
         try {
-            const res = await fetch(`${API_BASE}/usuaris/usuaris/${usuari.id_usuari}`, {
+            const res = await fetch(`${API_BASE}/usuaris/${usuari.id_usuari}`, {
                 method: 'DELETE'
             });
 
