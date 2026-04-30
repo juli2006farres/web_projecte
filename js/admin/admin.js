@@ -1,13 +1,85 @@
-const API_BASE = 'http://localhost:8085';
+const API_BASE = 'http://localhost:8085'; // Canvia per la URL real en producció
 
-(function() {
+// ============================================================
+// GESTIÓ D'AUTENTICACIÓ
+// ============================================================
+function getToken() {
+    return localStorage.getItem('agenda_token');
+}
+function setToken(token) {
+    localStorage.setItem('agenda_token', token);
+}
+function clearToken() {
+    localStorage.removeItem('agenda_token');
+}
+function authHeaders() {
+    const token = getToken();
+    return token
+        ? { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
+        : { 'Content-Type': 'application/json' };
+}
+function authHeadersNoBody() {
+    const token = getToken();
+    return token ? { 'Authorization': `Bearer ${token}` } : {};
+}
+
+// Callback que crida Google quan l'usuari s'autentica
+async function handleGoogleCredential(response) {
+    const token = response.credential;
+    try {
+        // Registra/actualitza l'usuari al backend
+        const res = await fetch(`${API_BASE}/usuaris/token`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) {
+            document.getElementById('login-error').style.display = 'block';
+            return;
+        }
+        setToken(token);
+        mostrarPanell();
+    } catch (e) {
+        console.error('Error d\'autenticació:', e);
+        document.getElementById('login-error').style.display = 'block';
+    }
+}
+
+function mostrarPanell() {
+    document.getElementById('login-overlay').style.display = 'none';
+}
+
+function initAuth() {
+    if (getToken()) {
+        // Ja tenim token: mostra el panell directament
+        mostrarPanell();
+        return;
+    }
+    // Mostra l'overlay de login
+    document.getElementById('login-overlay').style.display = 'flex';
+
+    // Inicialitza Google Sign-In
+    const clientId = document.querySelector('meta[name="google-client-id"]')?.content;
+    if (!clientId) { console.error('Falta el Google Client ID al meta tag!'); return; }
+
+    google.accounts.id.initialize({
+        client_id: clientId,
+        callback: handleGoogleCredential
+    });
+    google.accounts.id.renderButton(
+        document.getElementById('google-signin-btn'),
+        { theme: 'outline', size: 'large', text: 'signin_with', locale: 'ca' }
+    );
+}
+// ============================================================
+
+(function () {
     "use strict";
 
-    
+
 
     // Esperem que el DOM estigui carregat
-    document.addEventListener('DOMContentLoaded', function() {
-        
+    document.addEventListener('DOMContentLoaded', function () {
+
         // ---------- RELLOTGE ----------
         function updateClock() {
             const timeEl = document.getElementById('admin-current-time');
@@ -55,7 +127,7 @@ const API_BASE = 'http://localhost:8085';
 
         // Assignar event listeners als botons de navegació
         navButtons.forEach(btn => {
-            btn.addEventListener('click', function(e) {
+            btn.addEventListener('click', function (e) {
                 e.preventDefault();
                 const viewId = this.dataset.view;
                 if (viewId) switchView(viewId);
@@ -65,13 +137,14 @@ const API_BASE = 'http://localhost:8085';
         // ---------- BOTÓ SORTIR ----------
         const logoutBtn = document.getElementById('logout-btn');
         if (logoutBtn) {
-            logoutBtn.addEventListener('click', function(e) {
+            logoutBtn.addEventListener('click', function (e) {
                 e.preventDefault();
                 // Aquí pots redirigir a la pàgina principal o tancar sessió
                 if (confirm('Estàs segur que vols sortir del panell d\'administració?')) {
-                    // Redirigeix a la pàgina principal (index.html)
+                    clearToken();
+                    google.accounts.id.disableAutoSelect();
                     window.location.href = '../index.html'; // ajusta la ruta segons estructura
-                    // O també pots esborrar token d'autenticació si n'hi ha
+
                 }
             });
         }
@@ -90,6 +163,7 @@ const API_BASE = 'http://localhost:8085';
 
         loadDashboardStats();
         loadRecentActivity();
+        initAuth();
     });
 
 })();
@@ -105,8 +179,9 @@ async function loadDashboardStats() {
 
     // 1. Total d'usuaris
     try {
-        console.log('Valor de API_BASE:', API_BASE);
-        const resposta = await fetch(`${API_BASE}/usuaris`);
+        const resposta = await fetch(`${API_BASE}/usuaris`, {
+            headers: authHeadersNoBody()   // <-- AFEGIT
+        });
         const usuaris = await resposta.json();
         usersEl.textContent = usuaris.length;
     } catch (error) {
@@ -117,7 +192,7 @@ async function loadDashboardStats() {
     try {
         const resposta = await fetch(`${API_BASE}/activitats`);
         const activitats = await resposta.json();
-        
+
         let comptadorActives = 0;
         for (let i = 0; i < activitats.length; i++) {
             if (activitats[i].activa === true) {
@@ -163,7 +238,7 @@ async function loadRecentActivity() {
 
         // Ordenar per data descendent (més recents primer)
         // Suposem que data és 'YYYY-MM-DD' i horaInici 'HH:MM:SS'
-        activitats.sort(function(a, b) {
+        activitats.sort(function (a, b) {
             const dataA = a.data + 'T' + a.horaInici;
             const dataB = b.data + 'T' + b.horaInici;
             return dataB.localeCompare(dataA); // descendent
@@ -183,28 +258,28 @@ async function loadRecentActivity() {
         // Crear llista HTML
         for (let i = 0; i < ultimes.length; i++) {
             const act = ultimes[i];
-            
+
             const itemDiv = document.createElement('div');
             itemDiv.style.padding = '12px 0';
             itemDiv.style.borderBottom = '1px solid #e2e8f0';
-            
+
             // Títol
             const titolP = document.createElement('p');
             titolP.style.fontWeight = '600';
             titolP.style.fontSize = '1.2rem';
             titolP.style.marginBottom = '4px';
             titolP.textContent = act.titol;
-            
+
             // Data i hora
             const dataP = document.createElement('p');
             dataP.style.color = '#64748b';
             dataP.style.fontSize = '0.95rem';
-            
+
             // Format data dd/mm/aaaa
             const partsData = act.data.split('-');
             const dataFormatada = partsData[2] + '/' + partsData[1] + '/' + partsData[0];
             dataP.textContent = dataFormatada + ' · ' + act.horaInici.substring(0, 5) + ' - ' + act.horaFi.substring(0, 5);
-            
+
             itemDiv.appendChild(titolP);
             itemDiv.appendChild(dataP);
             recentListEl.appendChild(itemDiv);
@@ -234,7 +309,9 @@ async function loadUsersTable() {
     tbody.innerHTML = '<tr><td colspan="5">Carregant usuaris...</td></tr>';
 
     try {
-        const resposta = await fetch(`${API_BASE}/usuaris`);
+        const resposta = await fetch(`${API_BASE}/usuaris`, {
+            headers: authHeadersNoBody()   // <-- AFEGIT
+        });
         const usuaris = await resposta.json();
 
         // Netejar taula
@@ -286,7 +363,7 @@ async function loadUsersTable() {
             btnEditar.style.borderRadius = '30px';
             btnEditar.style.cursor = 'pointer';
             btnEditar.style.fontWeight = '500';
-            btnEditar.addEventListener('click', function() {
+            btnEditar.addEventListener('click', function () {
                 editarUsuari(u);
             });
 
@@ -300,7 +377,7 @@ async function loadUsersTable() {
             btnEsborrar.style.borderRadius = '30px';
             btnEsborrar.style.cursor = 'pointer';
             btnEsborrar.style.fontWeight = '500';
-            btnEsborrar.addEventListener('click', function() {
+            btnEsborrar.addEventListener('click', function () {
                 confirmarEsborrarUsuari(u);
             });
 
@@ -324,7 +401,7 @@ loadUsersTable();
 // Podem afegir un listener al botó de navegació 'users'
 const usersNavBtn = document.querySelector('.admin-nav-btn[data-view="users"]');
 if (usersNavBtn) {
-    usersNavBtn.addEventListener('click', function() {
+    usersNavBtn.addEventListener('click', function () {
         loadUsersTable();
     });
 }
@@ -410,7 +487,7 @@ async function loadActivitiesTable() {
             btnEsborrar.style.borderRadius = '30px';
             btnEsborrar.style.cursor = 'pointer';
             btnEsborrar.style.fontWeight = '500';
-            btnEsborrar.addEventListener('click', function() {
+            btnEsborrar.addEventListener('click', function () {
                 confirmarEsborrarActivitat(act);
             });
 
@@ -437,7 +514,7 @@ loadActivitiesTable();
 document.querySelector('.admin-nav-btn[data-view="activities"]').addEventListener('click', loadActivitiesTable);
 
 // Botó "Nova Activitat" → obre el modal de creació
-document.getElementById('btn-nova-activitat').addEventListener('click', function() {
+document.getElementById('btn-nova-activitat').addEventListener('click', function () {
     showNovaActivitatModal();
 });
 
@@ -449,7 +526,7 @@ async function showNovaActivitatModal() {
     try {
         const [resSales, resUsuaris] = await Promise.all([
             fetch(`${API_BASE}/salas`),
-            fetch(`${API_BASE}/usuaris`)
+            fetch(`${API_BASE}/usuaris`, { headers: authHeadersNoBody() })
         ]);
         sales = await resSales.json();
         usuaris = await resUsuaris.json();
@@ -528,7 +605,7 @@ async function showNovaActivitatModal() {
     overlay.onclick = e => { if (e.target === overlay) close(); };
 
     // Acció guardar
-    overlay.querySelector('#nova-act-guardar').onclick = async function() {
+    overlay.querySelector('#nova-act-guardar').onclick = async function () {
         const titol = document.getElementById('nova-act-titol').value.trim();
         const descripcio = document.getElementById('nova-act-descripcio').value.trim();
         const id_sala = document.getElementById('nova-act-sala').value;
@@ -557,9 +634,9 @@ async function showNovaActivitatModal() {
         };
 
         try {
-            const res = await fetch(`${API_BASE}/activitat`, {
+            const res = await fetch(`${API_BASE}/activitats`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: authHeaders(),
                 body: JSON.stringify(novaActivitat)
             });
 
@@ -655,7 +732,7 @@ async function loadRoomsTable() {
             btnEditar.style.borderRadius = '30px';
             btnEditar.style.cursor = 'pointer';
             btnEditar.style.fontWeight = '500';
-            btnEditar.addEventListener('click', function() {
+            btnEditar.addEventListener('click', function () {
                 editarSala(s.id_sala);
             });
 
@@ -669,7 +746,7 @@ async function loadRoomsTable() {
             btnEsborrar.style.borderRadius = '30px';
             btnEsborrar.style.cursor = 'pointer';
             btnEsborrar.style.fontWeight = '500';
-            btnEsborrar.addEventListener('click', function() {
+            btnEsborrar.addEventListener('click', function () {
                 confirmarEsborrarSala(s);
             });
 
@@ -713,8 +790,8 @@ async function editarSala(id) {
     const ubicacioOptions = ubicacions.map(u => {
         const selected = u === sala.ubicacio ? 'selected' : '';
         const label = u === 'P0' ? 'P0 — Planta baixa'
-                    : u === 'P4' ? 'P4 — Planta 4'
-                    : 'P5 — Planta 5';
+            : u === 'P4' ? 'P4 — Planta 4'
+                : 'P5 — Planta 5';
         return `<option value="${u}" ${selected}>${label}</option>`;
     }).join('');
 
@@ -751,7 +828,7 @@ async function editarSala(id) {
     overlay.onclick = e => { if (e.target === overlay) close(); };
 
     // Acció guardar
-    overlay.querySelector('#edit-sala-guardar').onclick = async function() {
+    overlay.querySelector('#edit-sala-guardar').onclick = async function () {
         const nom = document.getElementById('edit-sala-nom').value.trim();
         const ubicacio = document.getElementById('edit-sala-ubicacio').value;
         const descripcio = document.getElementById('edit-sala-descripcio').value.trim();
@@ -770,7 +847,7 @@ async function editarSala(id) {
         try {
             const res = await fetch(`${API_BASE}/salas/${id}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: authHeaders(),
                 body: JSON.stringify(salaActualitzada)
             });
 
@@ -795,7 +872,7 @@ document.querySelector('.admin-nav-btn[data-view="rooms"]').addEventListener('cl
 
 // Botó "Nova Sala" (per ara només missatge)
 // Botó "Nova Sala" → obre el modal de creació
-document.getElementById('btn-nova-sala').addEventListener('click', function() {
+document.getElementById('btn-nova-sala').addEventListener('click', function () {
     showNovaSalaModal();
 });
 
@@ -841,7 +918,7 @@ function showNovaSalaModal() {
     overlay.onclick = e => { if (e.target === overlay) close(); };
 
     // Acció guardar
-    overlay.querySelector('#nova-sala-guardar').onclick = async function() {
+    overlay.querySelector('#nova-sala-guardar').onclick = async function () {
         const nom = document.getElementById('nova-sala-nom').value.trim();
         const ubicacio = document.getElementById('nova-sala-ubicacio').value;
         const descripcio = document.getElementById('nova-sala-descripcio').value.trim();
@@ -860,7 +937,7 @@ function showNovaSalaModal() {
         try {
             const res = await fetch(`${API_BASE}/salas`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: authHeaders(), 
                 body: JSON.stringify(novaSala)
             });
 
@@ -916,10 +993,11 @@ function confirmarEsborrarSala(sala) {
     overlay.querySelector('#cancel-esborrar').onclick = close;
     overlay.onclick = e => { if (e.target === overlay) close(); };
 
-    overlay.querySelector('#confirm-esborrar').onclick = async function() {
+    overlay.querySelector('#confirm-esborrar').onclick = async function () {
         try {
             const res = await fetch(`${API_BASE}/salas/${sala.id_sala}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: authHeadersNoBody() 
             });
 
             if (res.ok) {
@@ -973,10 +1051,11 @@ function confirmarEsborrarActivitat(act) {
     overlay.querySelector('#cancel-esborrar-act').onclick = close;
     overlay.onclick = e => { if (e.target === overlay) close(); };
 
-    overlay.querySelector('#confirm-esborrar-act').onclick = async function() {
+    overlay.querySelector('#confirm-esborrar-act').onclick = async function () {
         try {
-            const res = await fetch(`${API_BASE}/activitat/${act.id_activitat}`, {
-                method: 'DELETE'
+            const res = await fetch(`${API_BASE}/activitats/${act.id_activitat}`, {
+                method: 'DELETE',
+                headers: authHeadersNoBody() 
             });
 
             if (res.ok) {
@@ -999,7 +1078,7 @@ function confirmarEsborrarActivitat(act) {
 
 
 // ---------- BOTÓ NOU USUARI ----------
-document.getElementById('btn-nou-usuari').addEventListener('click', function() {
+document.getElementById('btn-nou-usuari').addEventListener('click', function () {
     showNouUsuariModal();
 });
 
@@ -1035,7 +1114,7 @@ function showNouUsuariModal() {
     overlay.querySelector('.modal-close-icon').onclick = close;
     overlay.onclick = e => { if (e.target === overlay) close(); };
 
-    overlay.querySelector('#nou-user-guardar').onclick = async function() {
+    overlay.querySelector('#nou-user-guardar').onclick = async function () {
         const nom = document.getElementById('nou-user-nom').value.trim();
         const email = document.getElementById('nou-user-email').value.trim();
 
@@ -1054,7 +1133,7 @@ function showNouUsuariModal() {
         try {
             const res = await fetch(`${API_BASE}/usuaris`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: authHeaders(),
                 body: JSON.stringify(nouUsuari)
             });
 
@@ -1106,7 +1185,7 @@ function editarUsuari(usuari) {
     overlay.querySelector('.modal-close-icon').onclick = close;
     overlay.onclick = e => { if (e.target === overlay) close(); };
 
-    overlay.querySelector('#edit-user-guardar').onclick = async function() {
+    overlay.querySelector('#edit-user-guardar').onclick = async function () {
         const nom = document.getElementById('edit-user-nom').value.trim();
         const email = document.getElementById('edit-user-email').value.trim();
 
@@ -1124,7 +1203,7 @@ function editarUsuari(usuari) {
         try {
             const res = await fetch(`${API_BASE}/usuaris/${usuari.id_usuari}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: authHeaders(),
                 body: JSON.stringify(usuariActualitzat)
             });
 
@@ -1177,10 +1256,11 @@ function confirmarEsborrarUsuari(usuari) {
     overlay.querySelector('#cancel-esborrar-user').onclick = close;
     overlay.onclick = e => { if (e.target === overlay) close(); };
 
-    overlay.querySelector('#confirm-esborrar-user').onclick = async function() {
+    overlay.querySelector('#confirm-esborrar-user').onclick = async function () {
         try {
             const res = await fetch(`${API_BASE}/usuaris/${usuari.id_usuari}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: authHeadersNoBody()
             });
 
             if (res.ok) {
