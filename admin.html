@@ -4,7 +4,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="google-client-id" content="1042880725485-1pnfjrkd3m89b7pq3gjpad1g5lt3k0hh.apps.googleusercontent.com">
     <title>AgendaTIC · Administració</title>
 
     <!-- Font Awesome per icones (opcional) -->
@@ -13,26 +12,9 @@
     <!-- Estils del panell admin -->
     <link rel="stylesheet" href="./css/admin/admin.css">
 
-    <!-- Google Identity Services -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <!-- Posa aquí el teu Google Client ID -->
 </head>
 
 <body>
-
-    <!-- OVERLAY DE LOGIN (es mostra si no hi ha token) -->
-    <div id="login-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
-     background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-     z-index: 9999; display:flex; flex-direction:column;
-     align-items:center; justify-content:center; gap:24px;">
-        <h1 style="color:#fff; font-size:2rem; margin:0;">AgendaTIC · Administració</h1>
-        <p style="color:#94a3b8; margin:0;">Inicia sessió amb el teu compte de Google per continuar</p>
-        <div id="google-signin-btn"></div>
-        <p id="login-error" style="color:#f87171; display:none; margin:0;">
-            No tens permisos d'administrador. Contacta amb el suport.
-        </p>
-    </div>
-
     <header>
         <div class="header-info">
             <h1 id="admin-header-title">Panell d'Administració</h1>

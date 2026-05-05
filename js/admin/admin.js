@@ -24,53 +24,16 @@ function authHeadersNoBody() {
 }
 
 // Callback que crida Google quan l'usuari s'autentica
-async function handleGoogleCredential(response) {
-    const token = response.credential;
-    try {
-        // Registra/actualitza l'usuari al backend
-        const res = await fetch(`${API_BASE}/usuaris/token`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!res.ok) {
-            document.getElementById('login-error').style.display = 'block';
-            return;
-        }
-        setToken(token);
-        mostrarPanell();
-    } catch (e) {
-        console.error('Error d\'autenticació:', e);
-        document.getElementById('login-error').style.display = 'block';
-    }
-}
-
-function mostrarPanell() {
-    document.getElementById('login-overlay').style.display = 'none';
-}
+// (Aquesta lògica s'ha mogut a js/pages/login.js — la pàgina de login dedicada)
 
 function initAuth() {
-    if (getToken()) {
-        // Ja tenim token: mostra el panell directament
-        mostrarPanell();
+    // Si no hi ha token, redirigim a la pàgina de login
+    if (!getToken()) {
+        window.location.href = 'login.html';
         return;
     }
-    // Mostra l'overlay de login
-    document.getElementById('login-overlay').style.display = 'flex';
-
-    // Inicialitza Google Sign-In
-    const clientId = document.querySelector('meta[name="google-client-id"]')?.content;
-    if (!clientId) { console.error('Falta el Google Client ID al meta tag!'); return; }
-
-    google.accounts.id.initialize({
-        client_id: clientId,
-        callback: handleGoogleCredential
-    });
-    google.accounts.id.renderButton(
-        document.getElementById('google-signin-btn'),
-        { theme: 'outline', size: 'large', text: 'signin_with', locale: 'ca' }
-    );
+    // Si hi ha token, no cal fer res: el panell ja és visible
 }
-// ============================================================
 
 (function () {
     "use strict";
@@ -79,6 +42,11 @@ function initAuth() {
 
     // Esperem que el DOM estigui carregat
     document.addEventListener('DOMContentLoaded', function () {
+
+        // ---------- AUTENTICACIÓ (primer de tot!) ----------
+        // Si no hi ha token, redirigeix a login.html i atura l'execució
+        initAuth();
+        if (!getToken()) return;
 
         // ---------- RELLOTGE ----------
         function updateClock() {
@@ -139,12 +107,13 @@ function initAuth() {
         if (logoutBtn) {
             logoutBtn.addEventListener('click', function (e) {
                 e.preventDefault();
-                // Aquí pots redirigir a la pàgina principal o tancar sessió
                 if (confirm('Estàs segur que vols sortir del panell d\'administració?')) {
                     clearToken();
-                    google.accounts.id.disableAutoSelect();
-                    window.location.href = '../index.html'; // ajusta la ruta segons estructura
-
+                    // Si la llibreria de Google està carregada, desactivem auto-select
+                    if (typeof google !== 'undefined' && google.accounts) {
+                        google.accounts.id.disableAutoSelect();
+                    }
+                    window.location.href = 'index.html';
                 }
             });
         }
@@ -163,7 +132,6 @@ function initAuth() {
 
         loadDashboardStats();
         loadRecentActivity();
-        initAuth();
     });
 
 })();

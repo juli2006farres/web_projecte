@@ -186,7 +186,6 @@
             
             activeBtn = btn;
             activeView = panel;
-            dom.headerTitle.textContent = room.nom;
             dom.roomBadge.textContent = room.nom;
             
             const cal = calendars.get(String(room.id_sala));
@@ -225,7 +224,6 @@
         const savedColor = localStorage.getItem('pref_color');
         if (savedColor) document.documentElement.style.setProperty('--color-primary', savedColor);
         const savedName = localStorage.getItem('pref_nom');
-        if (savedName) dom.headerTitle.textContent = savedName;
         loadRooms();
     });
 })();
