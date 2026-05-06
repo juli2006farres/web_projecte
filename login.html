@@ -4,14 +4,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="google-client-id" content="1042880725485-1pnfjrkd3m89b7pq3gjpad1g5lt3k0hh.apps.googleusercontent.com">
+    <!-- ✅ ELIMINAT: meta google-client-id (ja no s'usa Google Sign-In directament) -->
+    <!-- ✅ ELIMINAT: <script src="https://accounts.google.com/gsi/client"> -->
     <title>AgendaTIC · Inicia sessió</title>
 
     <!-- Estils del login -->
     <link rel="stylesheet" href="./css/main/login.css">
 
-    <!-- Google Identity Services -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        /* Botó de login de Cognito (substitueix el botó de Google renderitzat) */
+        .cognito-login-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 24px;
+            background: #fff;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            font-family: 'Google Sans', Roboto, sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            color: #3c4043;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+            transition: background .2s, box-shadow .2s;
+        }
+        .cognito-login-btn:hover {
+            background: #f8f9fa;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+        .cognito-login-btn img {
+            width: 18px;
+            height: 18px;
+        }
+    </style>
 </head>
 
 <body>
@@ -38,7 +64,13 @@
                 Inicia sessió amb el teu compte de Google per accedir al panell d'administració.
             </p>
 
-            <div id="google-signin-btn" class="google-btn-wrapper"></div>
+            <!-- ✅ NOU: botó que redirigeix a Cognito Hosted UI -->
+            <div class="google-btn-wrapper">
+                <button id="cognito-signin-btn" class="cognito-login-btn">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+                    Inicia sessió amb Google
+                </button>
+            </div>
 
             <p id="login-loading" class="login-loading" style="display:none;">
                 <span class="spinner"></span> Verificant credencials...

@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:8085'; // Canvia per la URL real en producció
+const API_BASE = 'https://44.223.52.205/api'; // Canvia per la URL real en producció
 
 // ============================================================
 // GESTIÓ D'AUTENTICACIÓ
@@ -185,17 +185,6 @@ async function loadDashboardStats() {
 // Cridem la funció en iniciar
 
 
-
-
-
-
-
-
-
-
-
-
-
 // ---------- CARREGAR ACTIVITAT RECENT (últimes 3 activitats) ----------
 async function loadRecentActivity() {
     const recentListEl = document.getElementById('recent-list');
@@ -269,8 +258,6 @@ async function loadRecentActivity() {
 
 
 
-
-
 // ---------- CARREGAR TAULA D'USUARIS ----------
 async function loadUsersTable() {
     const tbody = document.getElementById('users-table-body');
@@ -321,20 +308,7 @@ async function loadUsersTable() {
             tdAccions.style.gap = '8px';
             tdAccions.style.justifyContent = 'center';
 
-            // Botó Editar
-            const btnEditar = document.createElement('button');
-            btnEditar.textContent = 'Editar';
-            btnEditar.style.backgroundColor = '#f59e0b';
-            btnEditar.style.color = 'white';
-            btnEditar.style.border = 'none';
-            btnEditar.style.padding = '6px 14px';
-            btnEditar.style.borderRadius = '30px';
-            btnEditar.style.cursor = 'pointer';
-            btnEditar.style.fontWeight = '500';
-            btnEditar.addEventListener('click', function () {
-                editarUsuari(u);
-            });
-
+           
             // Botó Esborrar
             const btnEsborrar = document.createElement('button');
             btnEsborrar.textContent = 'Esborrar';
@@ -349,7 +323,6 @@ async function loadUsersTable() {
                 confirmarEsborrarUsuari(u);
             });
 
-            tdAccions.appendChild(btnEditar);
             tdAccions.appendChild(btnEsborrar);
             fila.appendChild(tdAccions);
 
@@ -373,18 +346,6 @@ if (usersNavBtn) {
         loadUsersTable();
     });
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -444,6 +405,7 @@ async function loadActivitiesTable() {
             const tdAccions = document.createElement('td');
             tdAccions.style.display = 'flex';
             tdAccions.style.gap = '8px';
+
 
             // Botó Esborrar
             const btnEsborrar = document.createElement('button');
@@ -1044,151 +1006,6 @@ function confirmarEsborrarActivitat(act) {
 }
 
 
-
-// ---------- BOTÓ NOU USUARI ----------
-document.getElementById('btn-nou-usuari').addEventListener('click', function () {
-    showNouUsuariModal();
-});
-
-// ---------- MODAL NOU USUARI ----------
-function showNouUsuariModal() {
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-
-    overlay.innerHTML = `
-        <div class="modal-card">
-            <button class="modal-close-icon" aria-label="Tancar">✕</button>
-            <div class="modal-title">Nou Usuari</div>
-
-            <div class="modal-form">
-                <label>
-                    Nom
-                    <input type="text" id="nou-user-nom" placeholder="Ex: Joan Pérez" required>
-                </label>
-
-                <label>
-                    Email
-                    <input type="text" id="nou-user-email" placeholder="exemple@iticbcn.cat" required>
-                </label>
-            </div>
-
-            <button class="modal-close-btn" id="nou-user-guardar">Crear usuari</button>
-        </div>
-    `;
-
-    document.body.appendChild(overlay);
-
-    const close = () => overlay.remove();
-    overlay.querySelector('.modal-close-icon').onclick = close;
-    overlay.onclick = e => { if (e.target === overlay) close(); };
-
-    overlay.querySelector('#nou-user-guardar').onclick = async function () {
-        const nom = document.getElementById('nou-user-nom').value.trim();
-        const email = document.getElementById('nou-user-email').value.trim();
-
-        if (!nom) { alert('El nom és obligatori.'); return; }
-        if (!email) { alert('L\'email és obligatori.'); return; }
-        if (!email.includes('@')) { alert('L\'email no és vàlid.'); return; }
-
-        const nouUsuari = {
-            nom: nom,
-            email: email,
-            provider: 'manual',
-            providerId: null,
-            fotoPerfil: null
-        };
-
-        try {
-            const res = await fetch(`${API_BASE}/usuaris`, {
-                method: 'POST',
-                headers: authHeaders(),
-                body: JSON.stringify(nouUsuari)
-            });
-
-            if (res.ok) {
-                close();
-                loadUsersTable();
-                loadDashboardStats();
-            } else {
-                const errorText = await res.text();
-                console.error('Error backend:', res.status, errorText);
-                alert('Error ' + res.status + ': ' + errorText);
-            }
-        } catch (error) {
-            console.error('Error creant usuari:', error);
-            alert('Error de connexió: ' + error.message);
-        }
-    };
-}
-
-// ---------- MODAL EDITAR USUARI ----------
-function editarUsuari(usuari) {
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-
-    overlay.innerHTML = `
-        <div class="modal-card">
-            <button class="modal-close-icon" aria-label="Tancar">✕</button>
-            <div class="modal-title">Editar Usuari</div>
-
-            <div class="modal-form">
-                <label>
-                    Nom
-                    <input type="text" id="edit-user-nom" value="${usuari.nom || ''}" required>
-                </label>
-
-                <label>
-                    Email
-                    <input type="text" id="edit-user-email" value="${usuari.email || ''}" required>
-                </label>
-            </div>
-
-            <button class="modal-close-btn" id="edit-user-guardar">Guardar canvis</button>
-        </div>
-    `;
-
-    document.body.appendChild(overlay);
-
-    const close = () => overlay.remove();
-    overlay.querySelector('.modal-close-icon').onclick = close;
-    overlay.onclick = e => { if (e.target === overlay) close(); };
-
-    overlay.querySelector('#edit-user-guardar').onclick = async function () {
-        const nom = document.getElementById('edit-user-nom').value.trim();
-        const email = document.getElementById('edit-user-email').value.trim();
-
-        if (!nom) { alert('El nom és obligatori.'); return; }
-        if (!email) { alert('L\'email és obligatori.'); return; }
-        if (!email.includes('@')) { alert('L\'email no és vàlid.'); return; }
-
-        const usuariActualitzat = {
-            nom: nom,
-            email: email
-            // provider, providerId i fotoPerfil els deixem null perquè
-            // l'API mantingui els valors existents
-        };
-
-        try {
-            const res = await fetch(`${API_BASE}/usuaris/${usuari.id_usuari}`, {
-                method: 'PUT',
-                headers: authHeaders(),
-                body: JSON.stringify(usuariActualitzat)
-            });
-
-            if (res.ok) {
-                close();
-                loadUsersTable();
-            } else {
-                const errorText = await res.text();
-                console.error('Error backend:', res.status, errorText);
-                alert('Error ' + res.status + ': ' + errorText);
-            }
-        } catch (error) {
-            console.error('Error editant usuari:', error);
-            alert('Error de connexió: ' + error.message);
-        }
-    };
-}
 
 // ---------- MODAL CONFIRMAR ESBORRAR USUARI ----------
 function confirmarEsborrarUsuari(usuari) {
