@@ -2,12 +2,12 @@
 // LOGIN.JS — Gestió del Cognito Sign-In a la pàgina de login
 // ============================================================
 
-const API_BASE = 'https://44.223.52.205/api';
+const API_BASE = 'https://18.207.128.178/api';
 
 
 const COGNITO_DOMAIN    = 'agenda-barata-auth-c44f17.auth.us-east-1.amazoncognito.com';
 const COGNITO_CLIENT_ID = '5u259dphsi29sjqo8vj9fhv2me';
-const REDIRECT_URI      = 'http://127.0.0.1:3000/login.html';
+const REDIRECT_URI      = 'http://localhost:3000/login.html';
 
 // ---------- GESTIÓ DEL TOKEN ----------
 function getToken()        { return localStorage.getItem('agenda_token'); }

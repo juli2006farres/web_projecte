@@ -1,4 +1,4 @@
-const API_BASE = 'https://44.223.52.205/api'; // Canvia per la URL real en producció
+const API_BASE = 'https://18.207.128.178/api'; // Canvia per la URL real en producció
 
 // ============================================================
 // GESTIÓ D'AUTENTICACIÓ
